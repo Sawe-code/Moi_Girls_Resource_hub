@@ -11,10 +11,11 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2">
               <Image
-                src="/icons/logo.png"
+                src="/icons/crest.png"
                 alt="Moi Girls crest"
-                width={24}
-                height={24}
+                width={48}
+                height={48}
+                className="rounded-full"
               />
               <p className="text-light-100 text-lg font-bold italic">
                 Moi Girls High School, Eldoret
