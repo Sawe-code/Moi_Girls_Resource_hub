@@ -101,7 +101,7 @@ const Footer = () => {
                 </span>
               </p>
               <p>
-                Phone: <span className="text-light-100">+254 7XX XXX XXX</span>
+                Phone: <span className="text-light-100">+254 700 000 000</span>
               </p>
             </address>
           </div>
