@@ -1,7 +1,80 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const validateForm = () => {
+    if (!formData.email) {
+      setError("Email is required.");
+      return false;
+    }
+    if (!formData.email.includes("@")) {
+      setError("Invalid email address.");
+      return false;
+    }
+    if (!formData.password) {
+      setError("Pasword is required.");
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 charcters.");
+      return false;
+    }
+    return true;
+  };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      const data = await res.json();
+      console.log("Success: ", data);
+      if (!res.ok) {
+        throw new Error(data.error || "Login Failed.");
+      }
+      localStorage.setItem("token", data.data.token);
+
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-10 bg-background">
       <section className="w-full max-w-5xl overflow-hidden rounded-[28px] border border-dark-200 bg-white card-shadow">
@@ -44,7 +117,7 @@ const LoginPage = () => {
                 Sign in to continue to the Moi Girls Resource Portal
               </p>
 
-              <form className="mt-10 space-y-5">
+              <form onSubmit={handleSubmit} className="mt-10 space-y-5">
                 <div className="space-y-2">
                   <label
                     htmlFor="email"
@@ -56,6 +129,9 @@ const LoginPage = () => {
                     <input
                       id="email"
                       type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Enter your email"
                       className="w-full bg-transparent text-sm text-light-100 placeholder:text-light-200 outline-none"
                     />
@@ -73,6 +149,9 @@ const LoginPage = () => {
                     <input
                       id="password"
                       type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Enter your password"
                       className="w-full bg-transparent text-sm text-light-100 placeholder:text-light-200 outline-none"
                     />
@@ -88,11 +167,15 @@ const LoginPage = () => {
                   </Link>
                 </div>
 
+                {error && (
+                  <p className="text-sm text-red-400 text-center">{error}</p>
+                )}
+
                 <button
                   type="submit"
                   className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                 >
-                  Login
+                  {loading ? "Logging In..." : "Login"}
                 </button>
               </form>
 

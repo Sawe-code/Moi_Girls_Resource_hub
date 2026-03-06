@@ -2,8 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const SignUpPage = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -67,6 +69,8 @@ const SignUpPage = () => {
 
       console.log(data);
       localStorage.setItem("token", data.data.token);
+
+      router.push("/dashboard");
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);
@@ -76,13 +80,6 @@ const SignUpPage = () => {
     } finally {
       setLoading(false);
     }
-
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
   };
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-10 bg-background">
