@@ -7,24 +7,25 @@ const Footer = () => {
   return (
     <footer className="mt-20 glass border-t border-dark-200">
       <div className="mx-auto container sm:px-10 px-5 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Image
-                src="/icons/crest.png"
+                src="/icons/moi.png"
                 alt="Moi Girls crest"
                 width={48}
                 height={48}
-                className="rounded-full"
+                className="rounded-full object-cover"
               />
-              <p className="text-light-100 text-lg font-bold italic">
+              <p className="text-light-100 text-lg font-bold italic leading-snug">
                 Moi Girls High School, Eldoret
               </p>
             </div>
 
             <p className="text-light-200 text-sm mt-4 leading-relaxed">
-              Official portal for verified past papers, mock exams, and revision
-              resources. Secure payments and instant access.
+              Official portal for verified past papers, mock examinations, and
+              structured revision resources with secure payments and instant
+              access.
             </p>
           </div>
 
@@ -32,27 +33,30 @@ const Footer = () => {
             <p className="text-light-100 font-semibold">Quick Links</p>
             <ul className="mt-4 space-y-3 list-none">
               <li className="text-light-200 text-sm">
-                <Link href="/" className="hover:text-light-100">
+                <Link href="/" className="hover:text-primary transition">
                   Home
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/papers" className="hover:text-light-100">
+                <Link href="/papers" className="hover:text-primary transition">
                   Papers
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/pricing" className="hover:text-light-100">
+                <Link href="/pricing" className="hover:text-primary transition">
                   Pricing
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/login" className="hover:text-light-100">
+                <Link href="/login" className="hover:text-primary transition">
                   Login
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/dashboard" className="hover:text-light-100">
+                <Link
+                  href="/dashboard"
+                  className="hover:text-primary transition"
+                >
                   Dashboard
                 </Link>
               </li>
@@ -63,27 +67,27 @@ const Footer = () => {
             <p className="text-light-100 font-semibold">Support</p>
             <ul className="mt-4 space-y-3 list-none">
               <li className="text-light-200 text-sm">
-                <Link href="/faq" className="hover:text-light-100">
+                <Link href="/faq" className="hover:text-primary transition">
                   FAQs
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/contact" className="hover:text-light-100">
+                <Link href="/contact" className="hover:text-primary transition">
                   Academic Office
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/terms" className="hover:text-light-100">
+                <Link href="/terms" className="hover:text-primary transition">
                   Terms of Use
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/privacy" className="hover:text-light-100">
+                <Link href="/privacy" className="hover:text-primary transition">
                   Privacy Policy
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/refunds" className="hover:text-light-100">
+                <Link href="/refunds" className="hover:text-primary transition">
                   Refund Policy
                 </Link>
               </li>
@@ -107,7 +111,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-dark-200 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="mt-10 pt-6 border-t border-dark-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-light-200 text-xs">
             © {year} Moi Girls High School, Eldoret. All rights reserved.
           </p>

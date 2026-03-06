@@ -5,11 +5,11 @@ import Link from "next/link";
 const FeaturedPapers = () => {
   return (
     <section className="mt-14">
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-4">
         <div>
           <h3>Featured Papers</h3>
           <p className="text-light-200 text-sm mt-1">
-            Official Moi Girls past papers & mock exams
+            Official Moi Girls past papers and mock examinations
           </p>
         </div>
 
@@ -22,9 +22,9 @@ const FeaturedPapers = () => {
         {dummyPapers.map((paper) => (
           <div
             key={paper.id}
-            className="glass border border-dark-200 p-6 rounded-xl card-shadow transition duration-300 hover:-translate-y-1 hover:border-primary/50"
+            className="glass border border-dark-200 rounded-xl p-6 card-shadow transition duration-300 hover:-translate-y-1 hover:border-primary/50"
           >
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between gap-3">
               <span className="pill">{paper.subject}</span>
 
               {paper.isFree ? (
@@ -48,7 +48,7 @@ const FeaturedPapers = () => {
               <span>{paper.type}</span>
             </div>
 
-            <div className="mt-6 flex items-center justify-between">
+            <div className="mt-6 flex items-center justify-between gap-4">
               {paper.isFree ? (
                 <span className="text-primary font-semibold text-sm">
                   KES 0
@@ -61,7 +61,7 @@ const FeaturedPapers = () => {
 
               <Link
                 href={`/papers/${paper.id}`}
-                className="bg-primary hover:bg-primary/90 text-black font-semibold rounded-[6px] px-4 py-2 text-sm transition"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-[6px] px-4 py-2 text-sm transition sm:px-6 sm:py-3"
               >
                 {paper.isFree ? "Download" : "Pay to Access"}
               </Link>

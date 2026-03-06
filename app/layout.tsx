@@ -34,14 +34,14 @@ export default function RootLayout({
         <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
           <LightRays
             raysOrigin="top-center-offset"
-            raysColor="#5dfeca"
-            raysSpeed={0.5}
-            lightSpread={0.9}
-            rayLength={1.4}
+            raysColor="#800020"
+            raysSpeed={0.15}
+            lightSpread={0.6}
+            rayLength={1.2}
             followMouse={true}
-            mouseInfluence={0.02}
+            mouseInfluence={0.01}
             noiseAmount={0.0}
-            distortion={0.01}
+            distortion={0.0}
           />
         </div>
         <main>{children}</main>

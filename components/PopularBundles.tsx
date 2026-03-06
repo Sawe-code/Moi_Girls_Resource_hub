@@ -9,11 +9,11 @@ const PopularBundles = () => {
 
   return (
     <section className="mt-14">
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-4">
         <div>
           <h3>Revision Bundles</h3>
           <p className="text-light-200 text-sm mt-1">
-            Best-value revision packs from Moi Girls mocks and past papers
+            Structured revision packs from official Moi Girls examinations
           </p>
         </div>
 
@@ -29,7 +29,7 @@ const PopularBundles = () => {
           return (
             <div
               key={b.id}
-              className="glass border border-dark-200 rounded-xl p-6 card-shadow transition duration-300 hover:-translate-y-1 hover:border-primary/50"
+              className="glass border border-dark-200 rounded-xl p-6 card-shadow transition duration-300 hover:-translate-y-1 hover:border-primary/40"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="pill">{b.tag}</span>
@@ -42,6 +42,7 @@ const PopularBundles = () => {
               <h4 className="mt-4 text-light-100 text-xl font-semibold leading-snug">
                 {b.title}
               </h4>
+
               <p className="mt-2 text-light-200 text-sm">{b.subtitle}</p>
 
               <div className="mt-5 space-y-2 text-sm text-light-200">
@@ -49,18 +50,20 @@ const PopularBundles = () => {
                   <span className="text-light-100 font-semibold">
                     {b.papersCount}+
                   </span>{" "}
-                  papers included
+                  examination papers included
                 </p>
                 <p>{b.access}</p>
               </div>
 
               <div className="mt-6 flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-light-200 text-xs">One-time access</p>
+                  <p className="text-light-200 text-xs">One-time payment</p>
+
                   <div className="flex items-center gap-2">
                     <p className="text-light-100 text-lg font-bold">
                       KES {b.price}
                     </p>
+
                     <p className="text-light-200 text-sm line-through">
                       KES {b.oldPrice}
                     </p>
@@ -69,7 +72,7 @@ const PopularBundles = () => {
 
                 <Link
                   href={`/bundles/${b.id}`}
-                  className="bg-primary hover:bg-primary/90 text-black font-semibold rounded-[6px] px-4 py-2 text-sm transition"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-[6px] px-5 py-2 text-sm transition"
                 >
                   View Bundle
                 </Link>

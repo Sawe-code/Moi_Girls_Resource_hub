@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { faqs } from "@/constants";
 
@@ -7,7 +8,7 @@ const FAQ = () => {
 
   return (
     <section className="mt-20">
-      <div className="text-center">
+      <div className="text-center max-w-2xl mx-auto">
         <h3>Frequently Asked Questions</h3>
         <p className="text-light-200 text-sm mt-2">
           Important information regarding access, payment, and downloads.
@@ -18,20 +19,22 @@ const FAQ = () => {
         {faqs.map((faq, index) => (
           <div
             key={faq.question}
-            className="glass border border-dark-200 rounded-lg card-shadow p-6 transition duration-300 hover:border-primary/50"
+            className="glass border border-dark-200 rounded-xl card-shadow p-6 transition duration-300 hover:border-primary/40"
           >
             <button
+              type="button"
               onClick={() =>
                 setActiveIndex(activeIndex === index ? null : index)
               }
               aria-expanded={activeIndex === index}
               aria-controls={`faq-${index}`}
-              className="w-full text-left flex justify-between items-center"
+              className="w-full flex items-center justify-between gap-4 text-left"
             >
               <span className="text-light-100 font-semibold">
                 {faq.question}
               </span>
-              <span className="text-primary text-xl">
+
+              <span className="text-primary text-xl font-semibold shrink-0">
                 {activeIndex === index ? "−" : "+"}
               </span>
             </button>
