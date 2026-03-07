@@ -62,7 +62,7 @@ const Navbar = ({ isLoggedIn = false }: NavbarProps) => {
 
         <button
           type="button"
-          onClick={() => setOpen(!open)}
+          onClick={() => setOpen(!open)} // this will toggle the menu
           aria-label="Toggle menu"
           aria-expanded={open}
           className="md:hidden glass border border-dark-200 rounded-lg px-3 py-2 text-light-100"
