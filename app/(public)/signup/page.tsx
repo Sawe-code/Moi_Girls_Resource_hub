@@ -69,8 +69,13 @@ const SignUpPage = () => {
 
       console.log(data);
       localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
 
-      router.push("/dashboard");
+      if (data.data.user.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);
