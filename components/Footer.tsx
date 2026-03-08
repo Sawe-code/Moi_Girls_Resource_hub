@@ -100,12 +100,12 @@ const Footer = () => {
               <p>Eldoret, Kenya</p>
               <p>
                 Email:{" "}
-                <span className="text-light-100">
-                  info@moigirlseldoret.ac.ke
+                <span className="text-light-100 hover:text-primary transition">
+                  <a href="mailto:info@moigirlseldoret.ac.ke">info@moigirlseldoret.ac.ke</a>
                 </span>
               </p>
               <p>
-                Phone: <span className="text-light-100">+254 700 000 000</span>
+                <a href="tel:+254759389236">Phone: <span className="text-light-100 hover:text-primary transition">+254 759 389 236</span></a>
               </p>
             </address>
           </div>

@@ -60,7 +60,7 @@ const AdminDashboard = () => {
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-light-200 text-sm">{user?.isFirstLogin ? `Welcome, ${user?.name}` : `Welcome back, ${user?.name}`}</p>
+            <p className="text-light-200 text-base capitalize">{user?.isFirstLogin ? `Welcome, ${user?.name}` : `Welcome back, ${user?.name}`}</p>
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
               Admin Dashboard
             </h1>

@@ -65,7 +65,7 @@ const StudentDashboard = () => {
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
-            <p className="text-light-200 text-base">
+            <p className="text-light-200 text-base capitalize">
               {user?.isFirstLogin
                 ? `Welcome, ${user?.name}`
                 : `Welcome back, ${user?.name}`}
