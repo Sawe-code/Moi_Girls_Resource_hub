@@ -61,7 +61,7 @@ const FeaturedPapers = () => {
 
               <Link
                 href={`/papers/${paper.id}`}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-[6px] px-4 py-2 text-sm transition sm:px-6 sm:py-3"
+                className="bg-primary hover:bg-primary/90 inline-flex items-center justify-center whitespace-nowrap text-primary-foreground font-semibold rounded-[6px] px-3 py-1 text-sm transition sm:px-2 sm:py-1"
               >
                 {paper.isFree ? "Download" : "Pay to Access"}
               </Link>

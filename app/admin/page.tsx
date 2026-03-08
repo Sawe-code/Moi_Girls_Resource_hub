@@ -1,4 +1,8 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
+import { StoredUser } from "@/types";
+
 
 const stats = [
   { label: "Total Students", value: "1,248" },
@@ -44,12 +48,19 @@ const latestPapers = [
 ];
 
 const AdminDashboard = () => {
+  const [user] = useState<StoredUser | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  
   return (
     <div className="space-y-8">
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-light-200 text-sm">Welcome back,</p>
+            <p className="text-light-200 text-sm">{user?.isFirstLogin ? `Welcome, ${user?.name}` : `Welcome back, ${user?.name}`}</p>
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
               Admin Dashboard
             </h1>
@@ -62,12 +73,12 @@ const AdminDashboard = () => {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/admin/papers"
-              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-full whitespace-nowrap bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               Add New Paper
             </Link>
 
-            <Link href="/admin/bundles" className="cta-secondary text-sm">
+            <Link href="/admin/bundles" className="inline-flex items-center justify-center cta-secondary whitespace-nowrap text-sm">
               Create Bundle
             </Link>
           </div>

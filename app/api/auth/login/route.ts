@@ -62,25 +62,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+    console.log("Before update:", user.hasLoggedInBefore);
+
+    const isFirstLogin = user.hasLoggedInBefore !== true;
+
+    user.hasLoggedInBefore = true;
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    console.log("After update:", user.hasLoggedInBefore);
+    console.log("Returned isFirstLogin:", isFirstLogin);
+
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
     });
 
     await session.commitTransaction();
     await session.endSession();
 
-    return NextResponse.json({
-      success: true,
-      message: "User logged in successfully",
-      data: {
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
+    return NextResponse.json(
+      {
+        success: true,
+        message: "User logged in successfully",
+        data: {
+          token,
+          user: {
+            id: user._id,
+            role: user.role,
+            name: user.name,
+            email: user.email,
+            hasLoggedInBefore: user.hasLoggedInBefore,
+            lastLoginAt: user.lastLoginAt,
+            isFirstLogin,
+          },
         },
       },
-    }, { status: 201 });
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Login error:", error);
     await session.abortTransaction();

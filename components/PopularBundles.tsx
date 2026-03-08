@@ -72,7 +72,7 @@ const PopularBundles = () => {
 
                 <Link
                   href={`/bundles/${b.id}`}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-[6px] px-5 py-2 text-sm transition"
+                  className="bg-primary whitespace-nowrap hover:bg-primary/90 text-primary-foreground font-semibold rounded-[6px] px-5 py-2 text-sm transition"
                 >
                   View Bundle
                 </Link>

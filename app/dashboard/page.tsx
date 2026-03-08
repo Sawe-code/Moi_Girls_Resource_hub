@@ -1,4 +1,7 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
+import { StoredUser } from "@/types";
 
 const stats = [
   { label: "Papers Purchased", value: "12" },
@@ -46,14 +49,31 @@ const libraryPreview = [
 ];
 
 const StudentDashboard = () => {
+  const [user] = useState<StoredUser | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+  console.log("Stored User: ", user);
   return (
     <div className="space-y-8">
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
-            <p className="text-light-200 text-sm">Welcome back,</p>
+            <p className="text-light-200 text-base">
+              {user?.isFirstLogin
+                ? `Welcome, ${user?.name}`
+                : `Welcome back, ${user?.name}`}
+            </p>
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
-              Continue With Your Revision
+              {user?.isFirstLogin
+                ? "Start your revision journey and explore your available resources."
+                : "Continue With your revision."}
             </h1>
             <p className="text-light-200 mt-4 max-w-2xl text-sm leading-relaxed">
               Access your purchased resources, download past papers, and keep
@@ -64,12 +84,15 @@ const StudentDashboard = () => {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/dashboard/library"
-              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-primary px-5 py-2.5 md:px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               Open My Library
             </Link>
 
-            <Link href="/papers" className="cta-secondary text-sm">
+            <Link
+              href="/papers"
+              className="inline-flex items-center justify-center whitespace-nowrap cta-secondary text-sm"
+            >
               Browse Papers
             </Link>
           </div>
@@ -150,7 +173,7 @@ const StudentDashboard = () => {
                     <p className="text-light-200 text-sm mt-1">{item.type}</p>
                   </div>
 
-                  <span className="pill">{item.amount}</span>
+                  <span className="pill whitespace-nowrap">{item.amount}</span>
                 </div>
 
                 <p className="text-light-200 text-sm mt-4">

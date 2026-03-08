@@ -28,7 +28,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'admin'],
         default: 'user' 
-    }
+    },
+    hasLoggedInBefore: {
+        type: Boolean,
+        default: false
+    },
+    lastLoginAt: {
+        type: Date,
+        default: null
+    },
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);

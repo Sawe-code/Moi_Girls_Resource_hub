@@ -62,9 +62,16 @@ const LoginPage = () => {
       if (!res.ok) {
         throw new Error(data.error || "Login Failed.");
       }
-      localStorage.setItem("token", data.data.token);
-
-      router.push("/dashboard");
+      if (data.success) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        console.log("saved user:", localStorage.getItem("user"));
+        if (data.data.user.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);

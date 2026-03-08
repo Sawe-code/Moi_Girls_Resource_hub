@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-const StudentTopbar = () => {
+const StudentTopbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -9,17 +9,24 @@ const StudentTopbar = () => {
     router.push("/login");
   };
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-light-100">
-          Student Dashboard
-        </h1>
-        <p className="text-sm text-light-200">
-          Access your purchased papers and continue revising.
-        </p>
+    <div className="flex items-center justify-between border-b border-border-dark bg-white px-5 py-5 sm:px-8">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="md:hidden rounded-lg border border-border-dark px-3 py-2 text-light-100"
+        >
+          ☰
+        </button>
+
+        <div>
+          <p className="text-light-100 text-xl font-semibold">Student Dashboard</p>
+          <p className="text-light-200 text-sm mt-1">Access your purchased papers and continue revising.</p>
+        </div>
       </div>
 
       <button
+        type="button"
         onClick={handleLogout}
         className="rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
       >

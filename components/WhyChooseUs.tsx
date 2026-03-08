@@ -19,10 +19,10 @@ const WhyChooseUs = () => {
             className="glass border border-dark-200 rounded-xl p-7 card-shadow transition duration-300 hover:border-primary/40"
           >
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <Image src={item.icon} alt="" width={28} height={28} />
+              <Image src={item.icon} alt="icon" width={32} height={32} className="rounded-md" />
             </div>
 
-            <h4 className="text-light-100 text-lg font-semibold mt-5">
+            <h4 className="text-light-100 text-lg font-semibold mt-5"> 
               {item.title}
             </h4>
 
