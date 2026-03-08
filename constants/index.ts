@@ -188,4 +188,23 @@ const faqs = [
   },
 ];
 
-export { dummyPapers, bundles, testimonials, steps, reasons, stats, faqs };
+const subjects = [
+  "All Subjects",
+  "Biology",
+  "Chemistry",
+  "English",
+  "Geography",
+  "History",
+  "Mathematics",
+  "Physics",
+];
+
+const forms = ["All Forms", "Form 1", "Form 2", "Form 3", "Form 4"];
+
+const examTypes = ["All Types", "Mock", "KCSE", "End Term", "Mid Term"];
+
+const years = ["All Years", "2022", "2023", "2024", "2025"];
+
+
+
+export { dummyPapers, bundles, testimonials, steps, reasons, stats, faqs, subjects, forms, examTypes, years };

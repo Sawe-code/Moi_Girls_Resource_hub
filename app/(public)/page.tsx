@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import ExploreBtn from "@/components/ExploreBtn";
@@ -9,8 +10,62 @@ import HowItWorks from "@/components/HowItWorks";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Stats from "@/components/Stats";
 import FAQ from "@/components/FAQ";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Paper } from "@/types";
+
 
 export default function Home() {
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [papers, setPapers] = useState<Paper[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchFeaturedPapers = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const res = await fetch(
+          `/api/papers?search=${encodeURIComponent(search)}`,
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch papers");
+        }
+
+        if (data.papers) {
+          setPapers(data.papers);
+        } else {
+          setPapers([]);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Something went wrong");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeaturedPapers();
+  }, []);
+
+  const handleSearchSubmit = () => {
+    const trimmedSearch = search.trim();
+
+    if (!trimmedSearch) {
+      router.push("/papers");
+      return;
+    }
+    router.push(`/papers?search=${encodeURIComponent(trimmedSearch)}`);
+  };
+
+  const featuredPapers = papers.slice(0, 3);
+
   return (
     <main>
       <section
@@ -41,7 +96,7 @@ export default function Home() {
 
           <h1 className="mt-6 tracking-tight">
             Moi Girls High School, Eldoret <br className="max-sm:hidden" />
-            Exam Resource Portal
+            Exam Resource Hub
           </h1>
 
           <p className="subheading">
@@ -70,10 +125,10 @@ export default function Home() {
           </p>
         </div>
 
-        <SearchBar />
+        <SearchBar value={search} onChange={setSearch} onSubmit={handleSearchSubmit} />
       </section>
 
-      <FeaturedPapers />
+      <FeaturedPapers papers={featuredPapers} loading={loading} error={error} />
       <PopularBundles />
       <HowItWorks />
       <WhyChooseUs />

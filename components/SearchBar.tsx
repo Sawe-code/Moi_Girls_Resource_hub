@@ -1,12 +1,13 @@
 "use client";
 import Image from 'next/image'
-import { useState } from 'react'
+import { SearchBarProps } from '@/types';
 
-const SearchBar = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+const SearchBar = ({ value, onChange, onSubmit }: SearchBarProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(searchTerm);
+    if (onSubmit) {
+      onSubmit();
+    }
   }
   return (
     <form className='search' onSubmit={handleSubmit}>
@@ -15,8 +16,8 @@ const SearchBar = () => {
         <input 
           type="text"
           placeholder="Search by subject, year, or exam type..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           aria-label='Search exam papers'
         />
       </div>
