@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UploadButton } from "@/app/utils/uploadthing";
 
 const AdminPapers = () => {
   const [formData, setFormData] = useState({
@@ -12,11 +13,13 @@ const AdminPapers = () => {
     price: "",
     isFree: false,
     hasMarkingScheme: false,
-    fileUrl: "",
   });
 
+  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -33,8 +36,13 @@ const AdminPapers = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+    setError("");
 
     try {
+      if (!uploadedFileUrl) {
+        throw new Error("Please upload a file");
+      }
+
       const res = await fetch("/api/papers", {
         method: "POST",
         headers: {
@@ -44,6 +52,7 @@ const AdminPapers = () => {
           ...formData,
           year: Number(formData.year),
           price: formData.isFree ? 0 : Number(formData.price),
+          fileUrl: uploadedFileUrl,
         }),
       });
 
@@ -54,6 +63,7 @@ const AdminPapers = () => {
       }
 
       setMessage("Paper uploaded successfully");
+      setError("");
 
       setFormData({
         title: "",
@@ -64,8 +74,9 @@ const AdminPapers = () => {
         price: "",
         isFree: false,
         hasMarkingScheme: false,
-        fileUrl: "",
       });
+      setUploadedFileUrl("");
+      setUploadedFileName("");
     } catch (error: unknown) {
       if (error instanceof Error) {
         setMessage(error.message);
@@ -145,15 +156,6 @@ const AdminPapers = () => {
             className="border border-border-dark rounded-xl px-4 py-3 text-sm text-light-100 outline-none disabled:bg-dark-200"
           />
 
-          <input
-            type="text"
-            name="fileUrl"
-            placeholder="File URL"
-            value={formData.fileUrl}
-            onChange={handleChange}
-            className="md:col-span-2 border border-border-dark rounded-xl px-4 py-3 text-sm text-light-100 outline-none"
-          />
-
           <label className="flex items-center gap-3 text-sm text-light-100">
             <input
               type="checkbox"
@@ -174,18 +176,45 @@ const AdminPapers = () => {
             Includes marking scheme
           </label>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-3">
+            <p className="text-sm font-medium text-light-100">Upload PDF</p>
+
+            <UploadButton
+              endpoint="paperUploader"
+              onClientUploadComplete={(res) => {
+                const file = res?.[0];
+                if (!file) return;
+
+                setUploadedFileUrl(file.serverData.fileUrl);
+                setUploadedFileName(file.name);
+                setMessage("PDF uploaded successfully");
+                setError("");
+              }}
+              onUploadError={(uploadError: Error) => {
+                setError(uploadError.message);
+              }}
+            />
+
+            {uploadedFileName && (
+              <p className="text-sm text-light-200">
+                Uploaded file: {uploadedFileName}
+              </p>
+            )}
+          </div>
+
+          <div className="md:col-span-2 flex items-center gap-4">
             <button
               type="submit"
-              disabled={loading}
-              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              disabled={loading || !uploadedFileUrl}
+              className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "Saving..." : "Create Paper"}
             </button>
           </div>
         </form>
 
-        {message && <p className="mt-4 text-sm text-light-200">{message}</p>}
+        {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
+        {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
       </section>
     </div>
   );

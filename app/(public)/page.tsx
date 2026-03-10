@@ -12,20 +12,24 @@ import Stats from "@/components/Stats";
 import FAQ from "@/components/FAQ";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Paper } from "@/types";
-
+import { Paper, Bundle } from "@/types";
 
 export default function Home() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [papers, setPapers] = useState<Paper[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
+  const [papers, setPapers] = useState<Paper[]>([]);
+  const [papersLoading, setPapersLoading] = useState(false);
+  const [papersError, setPapersError] = useState("");
+
+  const [bundles, setBundles] = useState<Bundle[]>([]);
+  const [bundlesLoading, setBundlesLoading] = useState(false);
+  const [bundlesError, setBundlesError] = useState("");
+
+  const [search, setSearch] = useState("");
   useEffect(() => {
     const fetchFeaturedPapers = async () => {
-      setLoading(true);
-      setError("");
+      setPapersLoading(true);
+      setPapersError("");
 
       try {
         const res = await fetch(
@@ -43,15 +47,44 @@ export default function Home() {
         }
       } catch (error) {
         if (error instanceof Error) {
-          setError(error.message);
+          setPapersError(error.message);
         } else {
-          setError("Something went wrong");
+          setPapersError("Something went wrong");
         }
       } finally {
-        setLoading(false);
+        setPapersLoading(false);
       }
     };
+    const fetchBundles = async () => {
+      setBundlesLoading(true);
+      setBundlesError("");
+
+      try {
+        const res = await fetch("/api/bundles");
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch bundles");
+        }
+
+        if (Array.isArray(data.bundles)) {
+          setBundles(data.bundles);
+        } else {
+          setBundles([]);
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setBundlesError(err.message);
+        } else {
+          setBundlesError("Something went wrong");
+        }
+      } finally {
+        setBundlesLoading(false);
+      }
+    };
+
     fetchFeaturedPapers();
+    fetchBundles();
   }, []);
 
   const handleSearchSubmit = () => {
@@ -65,6 +98,7 @@ export default function Home() {
   };
 
   const featuredPapers = papers.slice(0, 3);
+  const popularBundles = bundles.slice(0, 3);
 
   return (
     <main>
@@ -100,8 +134,8 @@ export default function Home() {
           </h1>
 
           <p className="subheading">
-            Verified KCSE past papers, mocks, and marking schemes organized for
-            structured revision and improved academic performance.
+            Verified KCSE past papers, mocks, and marking schemes — organized
+            for faster revision and better results.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -112,7 +146,7 @@ export default function Home() {
           </div>
 
           <p className="text-light-200 text-xs mt-6">
-            Secure M-Pesa payments • Instant access • Organized revision bundles
+            Secure M-Pesa payments • Instant access • Student-friendly bundles
           </p>
         </div>
       </section>
@@ -125,11 +159,23 @@ export default function Home() {
           </p>
         </div>
 
-        <SearchBar value={search} onChange={setSearch} onSubmit={handleSearchSubmit} />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onSubmit={handleSearchSubmit}
+        />
       </section>
 
-      <FeaturedPapers papers={featuredPapers} loading={loading} error={error} />
-      <PopularBundles />
+      <FeaturedPapers
+        papers={featuredPapers}
+        loading={papersLoading}
+        error={papersError}
+      />
+      <PopularBundles
+        bundles={popularBundles}
+        loading={bundlesLoading}
+        error={bundlesError}
+      />
       <HowItWorks />
       <WhyChooseUs />
       <Stats />
