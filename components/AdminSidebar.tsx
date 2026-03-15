@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -15,10 +16,12 @@ type AdminSidebarProps = {
   open: boolean;
   onClose: () => void;
 };
+
 const AdminSidebar = ({ open, onClose }: AdminSidebarProps) => {
   const pathname = usePathname();
 
   const isActive = (href: string) => pathname === href;
+
   return (
     <>
       {open && (
@@ -31,7 +34,7 @@ const AdminSidebar = ({ open, onClose }: AdminSidebarProps) => {
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen md:sticky md:top-0 w-72 flex-col border-r border-border-dark bg-white px-6 py-8 transition-transform duration-300 md:z-auto md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 shrink-0 overflow-y-auto border-r border-border-dark bg-white px-6 py-8 transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

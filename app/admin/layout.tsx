@@ -1,18 +1,26 @@
 "use client";
+
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminTopbar from "@/components/AdminTopbar";
 import { useState } from "react";
 
-const StudentLayout = ({ children }: { children: React.ReactNode }) => {
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen max-w-7xl">
-        <AdminSidebar open={open} onClose={() => setOpen(false)}/>
+        <div className="hidden md:block">
+          <AdminSidebar open={true} onClose={() => setOpen(false)} />
+        </div>
 
-        <div className="flex min-h-screen flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-border-dark bg-white/95 px-5 py-4 backdrop-blur-md sm:px-8">
-            <AdminTopbar onMenuClick={() => setOpen(true)}/>
+        <div className="md:hidden">
+          <AdminSidebar open={open} onClose={() => setOpen(false)} />
+        </div>
+
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 border-b border-border-dark bg-white/95 px-5 py-4 backdrop-blur-md sm:px-8">
+            <AdminTopbar onMenuClick={() => setOpen(true)} />
           </header>
 
           <main className="flex-1 px-5 py-8 sm:px-8">{children}</main>
@@ -22,4 +30,4 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default StudentLayout;
+export default AdminLayout;

@@ -150,12 +150,17 @@ const AdminDashboard = () => {
                 ? `Welcome, ${user?.name}`
                 : `Welcome back, ${user?.name}`}
             </p>
+
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
-              Admin Dashboard
+              {user?.isFirstLogin
+                ? "Welcome to the Admin Dashboard"
+                : "Admin Dashboard"}
             </h1>
+
             <p className="text-light-200 mt-4 max-w-2xl text-sm leading-relaxed">
-              Manage examination resources, monitor payments, and oversee
-              student access from one central control panel.
+              {user?.isFirstLogin
+                ? "You can now manage examination resources, monitor payments, create bundles, and oversee student access from this control panel."
+                : "Manage examination resources, monitor payments, and oversee student access from one central control panel."}
             </p>
           </div>
 
