@@ -1,9 +1,73 @@
 import { NextResponse } from "next/server";
+import connectToDatabase from "@/lib/db";
+import Payment from "@/models/Payment";
+import Purchase from "@/models/Purchase";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    await connectToDatabase();
 
-  console.log("MPESA CALLBACK:", JSON.stringify(body, null, 2));
+    const body = await req.json();
 
-  return NextResponse.json({ message: "Callback received" });
+    const callback = body?.Body?.stkCallback;
+
+    if (!callback) {
+      return NextResponse.json(
+        { success: false, error: "Invalid callback payload" },
+        { status: 400 }
+      );
+    }
+
+    const checkoutRequestId = callback.CheckoutRequestID;
+    const resultCode = callback.ResultCode;
+    const resultDesc = callback.ResultDesc;
+
+    const payment = await Payment.findOne({ reference: checkoutRequestId });
+
+    if (!payment) {
+      return NextResponse.json(
+        { success: false, error: "Payment record not found" },
+        { status: 404 }
+      );
+    }
+
+    if (resultCode === 0) {
+      payment.status = "completed";
+      await payment.save();
+
+      const existingPurchase = await Purchase.findOne({
+        payment: payment._id,
+      });
+
+      if (!existingPurchase) {
+        await Purchase.create({
+          user: payment.user,
+          paper: payment.paper || null,
+          bundle: payment.bundle || null,
+          amount: payment.amount,
+          payment: payment._id,
+        });
+      }
+    } else {
+      payment.status = "failed";
+      await payment.save();
+    }
+
+    console.log("===== MPESA CALLBACK =====");
+    console.log(JSON.stringify(body, null, 2));
+    console.log("Result:", resultDesc);
+    console.log("==========================");
+
+    return NextResponse.json(
+      { success: true, message: "Callback received successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("MPESA CALLBACK ERROR:", error);
+
+    return NextResponse.json(
+      { success: false, error: "Failed to process callback" },
+      { status: 500 }
+    );
+  }
 }

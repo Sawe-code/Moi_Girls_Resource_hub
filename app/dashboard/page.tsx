@@ -1,71 +1,110 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
-import { StoredUser } from "@/types";
-
-const stats = [
-  { label: "Papers Purchased", value: "12" },
-  { label: "Bundles Owned", value: "3" },
-  { label: "Downloads", value: "18" },
-  { label: "Recent Purchases", value: "4" },
-];
-
-const recentPurchases = [
-  {
-    id: "1",
-    title: "Form 4 Chemistry Mock Term 2",
-    type: "Paper",
-    amount: "KES 50",
-    date: "06 Mar 2026",
-  },
-  {
-    id: "2",
-    title: "KCSE Past Papers Collection",
-    type: "Bundle",
-    amount: "KES 250",
-    date: "04 Mar 2026",
-  },
-];
-
-const libraryPreview = [
-  {
-    id: "1",
-    title: "Form 4 Mathematics Paper 1",
-    subject: "Mathematics",
-    year: "2023",
-  },
-  {
-    id: "2",
-    title: "Biology Mock Examination",
-    subject: "Biology",
-    year: "2024",
-  },
-  {
-    id: "3",
-    title: "English End Term Exam",
-    subject: "English",
-    year: "2022",
-  },
-];
+import { useEffect, useState } from "react";
+import type { StoredUser, Paper, PurchasePayment, Bundle } from "@/types";
 
 const StudentDashboard = () => {
-  const [user] = useState<StoredUser | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [user, setUser] = useState<StoredUser | null>(null);
 
+  const [stats, setStats] = useState([
+    { label: "Papers Purchased", value: "0" },
+    { label: "Bundles Owned", value: "0" },
+    { label: "Total Spent", value: "KES 0" },
+    { label: "Recent Purchases", value: "0" },
+  ]);
+
+  const [recentPurchases, setRecentPurchases] = useState<PurchasePayment[]>([]);
+  const [libraryPreview, setLibraryPreview] = useState<Paper[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");
-      return storedUser ? JSON.parse(storedUser) : null;
+      setUser(storedUser ? JSON.parse(storedUser) : null);
     } catch {
-      return null;
+      setUser(null);
     }
-  });
-  console.log("Stored User: ", user);
+  }, []);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const [statsRes, purchasesRes, libraryRes] = await Promise.all([
+          fetch("/api/dashboard/stats", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch("/api/purchases", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch("/api/library", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
+
+        const statsData = await statsRes.json();
+        const purchasesData = await purchasesRes.json();
+        const libraryData = await libraryRes.json();
+
+        if (statsRes.ok && statsData.stats) {
+          setStats([
+            {
+              label: "Papers Purchased",
+              value: String(statsData.stats.papersPurchased ?? 0),
+            },
+            {
+              label: "Bundles Owned",
+              value: String(statsData.stats.bundlesOwned ?? 0),
+            },
+            {
+              label: "Total Spent",
+              value: `KES ${statsData.stats.totalSpent ?? 0}`,
+            },
+            {
+              label: "Recent Purchases",
+              value: String(statsData.stats.recentPurchases ?? 0),
+            },
+          ]);
+        }
+
+        if (purchasesRes.ok && Array.isArray(purchasesData.payments)) {
+          setRecentPurchases(purchasesData.payments.slice(0, 2));
+        }
+
+        if (libraryRes.ok && Array.isArray(libraryData.papers)) {
+          setLibraryPreview(libraryData.papers.slice(0, 3));
+        }
+      } catch (error) {
+        console.error("Dashboard data fetch failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="space-y-8">
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
-            <p className="text-light-200 text-base capitalize">
+            <p className="text-light-200 text-sm">
               {user?.isFirstLogin
                 ? `Welcome, ${user?.name}`
                 : `Welcome back, ${user?.name}`}
@@ -73,7 +112,7 @@ const StudentDashboard = () => {
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
               {user?.isFirstLogin
                 ? "Start your revision journey and explore your available resources."
-                : "Continue With your revision."}
+                : "Continue with your revision."}
             </h1>
             <p className="text-light-200 mt-4 max-w-2xl text-sm leading-relaxed">
               Access your purchased resources, download past papers, and keep
@@ -130,26 +169,37 @@ const StudentDashboard = () => {
           </div>
 
           <div className="mt-6 space-y-4">
-            {libraryPreview.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col gap-4 rounded-xl border border-border-dark bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-light-100 font-semibold">{item.title}</p>
-                  <p className="text-light-200 text-sm mt-1">
-                    {item.subject} • {item.year}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-                >
-                  Download
-                </button>
+            {loading ? (
+              <p className="text-light-200 text-sm">Loading library...</p>
+            ) : libraryPreview.length === 0 ? (
+              <div className="rounded-xl border border-border-dark bg-white p-5">
+                <p className="text-light-100 font-semibold">No papers yet</p>
+                <p className="text-light-200 text-sm mt-1">
+                  Purchased papers will appear here.
+                </p>
               </div>
-            ))}
+            ) : (
+              libraryPreview.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex flex-col gap-4 rounded-xl border border-border-dark bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-light-100 font-semibold">{item.title}</p>
+                    <p className="text-light-200 text-sm mt-1">
+                      {item.subject} • {item.year}
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/papers/${item._id}`}
+                    className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                  >
+                    Open
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -162,25 +212,53 @@ const StudentDashboard = () => {
           </div>
 
           <div className="mt-6 space-y-4">
-            {recentPurchases.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-border-dark bg-white p-5"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-light-100 font-semibold">{item.title}</p>
-                    <p className="text-light-200 text-sm mt-1">{item.type}</p>
-                  </div>
-
-                  <span className="pill whitespace-nowrap">{item.amount}</span>
-                </div>
-
-                <p className="text-light-200 text-sm mt-4">
-                  Purchased on {item.date}
+            {loading ? (
+              <p className="text-light-200 text-sm">Loading purchases...</p>
+            ) : recentPurchases.length === 0 ? (
+              <div className="rounded-xl border border-border-dark bg-white p-5">
+                <p className="text-light-100 font-semibold">No purchases yet</p>
+                <p className="text-light-200 text-sm mt-1">
+                  Your latest purchases will appear here.
                 </p>
               </div>
-            ))}
+            ) : (
+              recentPurchases.map((item) => {
+                const title =
+                  item.paper?.title || item.bundle?.title || "Unknown item";
+                const type = item.paper
+                  ? "Paper"
+                  : item.bundle
+                    ? "Bundle"
+                    : "Item";
+
+                return (
+                  <div
+                    key={item._id}
+                    className="rounded-xl border border-border-dark bg-white p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-light-100 font-semibold">{title}</p>
+                        <p className="text-light-200 text-sm mt-1">{type}</p>
+                      </div>
+
+                      <span className="pill whitespace-nowrap">
+                        KES {item.amount}
+                      </span>
+                    </div>
+
+                    <p className="text-light-200 text-sm mt-4">
+                      Purchased on{" "}
+                      {new Date(item.createdAt).toLocaleDateString("en-KE", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <Link

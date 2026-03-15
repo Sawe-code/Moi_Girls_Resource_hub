@@ -25,7 +25,6 @@ const paymentSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: [true, "Amount is required"],
-      min: [0, "Amount cannot be negative"],
     },
     status: {
       type: String,
@@ -40,13 +39,11 @@ const paymentSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       default: "M-Pesa",
-      trim: true,
     },
   },
   { timestamps: true }
 );
 
-const Payment =
-  mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
+const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
 
 export default Payment;

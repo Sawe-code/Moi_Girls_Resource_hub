@@ -1,66 +1,155 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
-import { StoredUser } from "@/types";
-
-
-const stats = [
-  { label: "Total Students", value: "1,248" },
-  { label: "Total Papers", value: "186" },
-  { label: "Total Bundles", value: "14" },
-  { label: "Total Revenue", value: "KES 248,500" },
-];
-
-const recentPayments = [
-  {
-    id: "1",
-    name: "Mercy Chebet",
-    item: "KCSE Papers Bundle",
-    amount: "KES 250",
-    date: "06 Mar 2026",
-  },
-  {
-    id: "2",
-    name: "Shanique Ngaira",
-    item: "Form 4 Chemistry Mock",
-    amount: "KES 50",
-    date: "05 Mar 2026",
-  },
-  {
-    id: "3",
-    name: "Asisi Joy",
-    item: "Revision Bundle",
-    amount: "KES 350",
-    date: "04 Mar 2026",
-  },
-];
-
-const recentUsers = [
-  { id: "1", name: "Marion ChepChumba", email: "marion@gmail.com" },
-  { id: "2", name: "Brian Sawe", email: "brian@gmail.com" },
-  { id: "3", name: "Edwin Waweru", email: "edwin@gmail.com" },
-];
-
-const latestPapers = [
-  { id: "1", title: "Form 4 Biology Mock", subject: "Biology" },
-  { id: "2", title: "KCSE Mathematics Paper 2", subject: "Mathematics" },
-  { id: "3", title: "English End Term Exam", subject: "English" },
-];
+import { useEffect, useState } from "react";
+import {
+  StoredUser,
+  AdminOverviewStats,
+  AdminRecentPayment,
+  AdminRecentUser,
+  AdminLatestPaper,
+  AdminPaymentSummary,
+  AdminRevenueChartItem,
+} from "@/types";
 
 const AdminDashboard = () => {
-  const [user] = useState<StoredUser | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [user, setUser] = useState<StoredUser | null>(null);
 
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+  const [stats, setStats] = useState<AdminOverviewStats>({
+    totalStudents: 0,
+    totalPapers: 0,
+    totalBundles: 0,
+    totalRevenue: 0,
   });
-  
+
+  const [paymentSummary, setPaymentSummary] = useState<AdminPaymentSummary>({
+    completed: 0,
+    pending: 0,
+    failed: 0,
+  });
+
+  const [revenueChart, setRevenueChart] = useState<AdminRevenueChartItem[]>([]);
+  const [recentPayments, setRecentPayments] = useState<AdminRecentPayment[]>(
+    [],
+  );
+  const [recentUsers, setRecentUsers] = useState<AdminRecentUser[]>([]);
+  const [latestPapers, setLatestPapers] = useState<AdminLatestPaper[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      setUser(storedUser ? JSON.parse(storedUser) : null);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAdminOverview = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("Please log in as admin.");
+        }
+
+        const res = await fetch("/api/admin/overview", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load admin overview");
+        }
+
+        setStats(
+          data.stats || {
+            totalStudents: 0,
+            totalPapers: 0,
+            totalBundles: 0,
+            totalRevenue: 0,
+          },
+        );
+
+        setPaymentSummary(
+          data.paymentSummary || {
+            completed: 0,
+            pending: 0,
+            failed: 0,
+          },
+        );
+
+        setRevenueChart(
+          Array.isArray(data.revenueChart) ? data.revenueChart : [],
+        );
+        setRecentPayments(
+          Array.isArray(data.recentPayments) ? data.recentPayments : [],
+        );
+        setRecentUsers(Array.isArray(data.recentUsers) ? data.recentUsers : []);
+        setLatestPapers(
+          Array.isArray(data.latestPapers) ? data.latestPapers : [],
+        );
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Something went wrong");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdminOverview();
+  }, []);
+
+  const statCards = [
+    { label: "Total Students", value: String(stats.totalStudents) },
+    { label: "Total Papers", value: String(stats.totalPapers) },
+    { label: "Total Bundles", value: String(stats.totalBundles) },
+    { label: "Total Revenue", value: `KES ${stats.totalRevenue}` },
+  ];
+
+  const paymentCards = [
+    {
+      label: "Completed Payments",
+      value: String(paymentSummary.completed),
+      textClass: "text-green-600",
+    },
+    {
+      label: "Pending Payments",
+      value: String(paymentSummary.pending),
+      textClass: "text-yellow-600",
+    },
+    {
+      label: "Failed Payments",
+      value: String(paymentSummary.failed),
+      textClass: "text-red-500",
+    },
+  ];
+
+  const maxRevenue = Math.max(...revenueChart.map((item) => item.revenue), 1);
+
   return (
     <div className="space-y-8">
       <section className="glass rounded-2xl border border-border-dark p-8 card-shadow">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-light-200 text-base capitalize">{user?.isFirstLogin ? `Welcome, ${user?.name}` : `Welcome back, ${user?.name}`}</p>
+            <p className="text-light-200 text-base capitalize">
+              {user?.isFirstLogin
+                ? `Welcome, ${user?.name}`
+                : `Welcome back, ${user?.name}`}
+            </p>
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
               Admin Dashboard
             </h1>
@@ -78,23 +167,100 @@ const AdminDashboard = () => {
               Add New Paper
             </Link>
 
-            <Link href="/admin/bundles" className="inline-flex items-center justify-center cta-secondary whitespace-nowrap text-sm">
+            <Link
+              href="/admin/bundles"
+              className="inline-flex items-center justify-center cta-secondary whitespace-nowrap text-sm"
+            >
               Create Bundle
             </Link>
           </div>
         </div>
       </section>
 
+      {error && (
+        <section className="glass rounded-2xl border border-border-dark p-6 card-shadow">
+          <p className="text-red-500 text-sm">{error}</p>
+        </section>
+      )}
+
       <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => (
+        {statCards.map((item) => (
           <div
             key={item.label}
             className="glass rounded-2xl border border-border-dark p-6 card-shadow"
           >
             <p className="text-light-200 text-sm">{item.label}</p>
-            <p className="mt-3 text-primary text-3xl font-bold">{item.value}</p>
+            <p className="mt-3 text-primary text-3xl font-bold">
+              {loading ? "..." : item.value}
+            </p>
           </div>
         ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {paymentCards.map((item) => (
+          <div
+            key={item.label}
+            className="glass rounded-2xl border border-border-dark p-6 card-shadow"
+          >
+            <p className="text-light-200 text-sm">{item.label}</p>
+            <p className={`mt-3 text-3xl font-bold ${item.textClass}`}>
+              {loading ? "..." : item.value}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      <section className="glass rounded-2xl border border-border-dark p-6 card-shadow">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3>Revenue Overview</h3>
+            <p className="text-light-200 text-sm mt-1">
+              Monthly completed payment totals
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          {loading ? (
+            <p className="text-light-200 text-sm">Loading chart...</p>
+          ) : revenueChart.length === 0 ? (
+            <div className="rounded-xl border border-border-dark bg-white p-5">
+              <p className="text-light-100 font-semibold">
+                No revenue data yet
+              </p>
+              <p className="text-light-200 text-sm mt-1">
+                Completed payments will appear here once transactions begin.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-end gap-4 overflow-x-auto pb-2">
+              {revenueChart.map((item) => {
+                const height = `${Math.max((item.revenue / maxRevenue) * 220, 24)}px`;
+
+                return (
+                  <div
+                    key={item.month}
+                    className="flex min-w-[90px] flex-col items-center gap-3"
+                  >
+                    <div className="text-xs font-semibold text-light-100">
+                      KES {item.revenue}
+                    </div>
+
+                    <div className="flex h-[240px] items-end">
+                      <div
+                        className="w-14 rounded-t-xl bg-primary transition-all duration-300"
+                        style={{ height }}
+                      />
+                    </div>
+
+                    <div className="text-xs text-light-200">{item.month}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-8 xl:grid-cols-[1.2fr_0.8fr]">
@@ -116,43 +282,60 @@ const AdminDashboard = () => {
           </div>
 
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full border-separate border-spacing-y-3">
-              <thead>
-                <tr>
-                  <th className="text-left text-xs font-semibold text-light-200">
-                    Student
-                  </th>
-                  <th className="text-left text-xs font-semibold text-light-200">
-                    Item
-                  </th>
-                  <th className="text-left text-xs font-semibold text-light-200">
-                    Amount
-                  </th>
-                  <th className="text-left text-xs font-semibold text-light-200">
-                    Date
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {recentPayments.map((payment) => (
-                  <tr key={payment.id} className="bg-white">
-                    <td className="rounded-l-xl border-y border-l border-border-dark px-4 py-4 text-sm text-light-100">
-                      {payment.name}
-                    </td>
-                    <td className="border-y border-border-dark px-4 py-4 text-sm text-light-200">
-                      {payment.item}
-                    </td>
-                    <td className="border-y border-border-dark px-4 py-4 text-sm font-semibold text-primary">
-                      {payment.amount}
-                    </td>
-                    <td className="rounded-r-xl border-y border-r border-border-dark px-4 py-4 text-sm text-light-200">
-                      {payment.date}
-                    </td>
+            {loading ? (
+              <p className="text-light-200 text-sm">Loading payments...</p>
+            ) : recentPayments.length === 0 ? (
+              <div className="rounded-xl border border-border-dark bg-white p-5">
+                <p className="text-light-100 font-semibold">
+                  No recent payments
+                </p>
+                <p className="text-light-200 text-sm mt-1">
+                  Completed transactions will appear here.
+                </p>
+              </div>
+            ) : (
+              <table className="w-full border-separate border-spacing-y-3">
+                <thead>
+                  <tr>
+                    <th className="text-left text-xs font-semibold text-light-200">
+                      Student
+                    </th>
+                    <th className="text-left text-xs font-semibold text-light-200">
+                      Item
+                    </th>
+                    <th className="text-left text-xs font-semibold text-light-200">
+                      Amount
+                    </th>
+                    <th className="text-left text-xs font-semibold text-light-200">
+                      Date
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {recentPayments.map((payment) => (
+                    <tr key={payment.id} className="bg-white">
+                      <td className="rounded-l-xl border-y border-l border-border-dark px-4 py-4 text-sm text-light-100">
+                        {payment.name}
+                      </td>
+                      <td className="border-y border-border-dark px-4 py-4 text-sm text-light-200">
+                        {payment.item}
+                      </td>
+                      <td className="border-y border-border-dark px-4 py-4 text-sm font-semibold text-primary">
+                        {payment.amount}
+                      </td>
+                      <td className="rounded-r-xl border-y border-r border-border-dark px-4 py-4 text-sm text-light-200">
+                        {new Date(payment.date).toLocaleDateString("en-KE", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
@@ -215,15 +398,26 @@ const AdminDashboard = () => {
           </div>
 
           <div className="mt-6 space-y-4">
-            {recentUsers.map((user) => (
-              <div
-                key={user.id}
-                className="rounded-xl border border-border-dark bg-white p-5"
-              >
-                <p className="text-light-100 font-semibold">{user.name}</p>
-                <p className="text-light-200 text-sm mt-1">{user.email}</p>
+            {loading ? (
+              <p className="text-light-200 text-sm">Loading users...</p>
+            ) : recentUsers.length === 0 ? (
+              <div className="rounded-xl border border-border-dark bg-white p-5">
+                <p className="text-light-100 font-semibold">No recent users</p>
+                <p className="text-light-200 text-sm mt-1">
+                  New student registrations will appear here.
+                </p>
               </div>
-            ))}
+            ) : (
+              recentUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="rounded-xl border border-border-dark bg-white p-5"
+                >
+                  <p className="text-light-100 font-semibold">{user.name}</p>
+                  <p className="text-light-200 text-sm mt-1">{user.email}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -245,15 +439,26 @@ const AdminDashboard = () => {
           </div>
 
           <div className="mt-6 space-y-4">
-            {latestPapers.map((paper) => (
-              <div
-                key={paper.id}
-                className="rounded-xl border border-border-dark bg-white p-5"
-              >
-                <p className="text-light-100 font-semibold">{paper.title}</p>
-                <p className="text-light-200 text-sm mt-1">{paper.subject}</p>
+            {loading ? (
+              <p className="text-light-200 text-sm">Loading papers...</p>
+            ) : latestPapers.length === 0 ? (
+              <div className="rounded-xl border border-border-dark bg-white p-5">
+                <p className="text-light-100 font-semibold">No papers yet</p>
+                <p className="text-light-200 text-sm mt-1">
+                  Newly uploaded papers will appear here.
+                </p>
               </div>
-            ))}
+            ) : (
+              latestPapers.map((paper) => (
+                <div
+                  key={paper.id}
+                  className="rounded-xl border border-border-dark bg-white p-5"
+                >
+                  <p className="text-light-100 font-semibold">{paper.title}</p>
+                  <p className="text-light-200 text-sm mt-1">{paper.subject}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

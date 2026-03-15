@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import type { BundleDetails } from "@/types";
+import type { Paper } from "@/types";
 
-const BundleDetailsPage = () => {
+const PaperDetailsPage = () => {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const [bundle, setBundle] = useState<BundleDetails | null>(null);
+  const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -31,19 +31,19 @@ const BundleDetailsPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchBundle = async () => {
+    const fetchPaper = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const res = await fetch(`/api/bundles/${id}`);
+        const res = await fetch(`/api/papers/${id}`);
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Failed to fetch bundle");
+          throw new Error(data.error || "Failed to fetch paper");
         }
 
-        setBundle(data.bundle || null);
+        setPaper(data.paper || null);
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err.message);
@@ -56,7 +56,7 @@ const BundleDetailsPage = () => {
     };
 
     if (id) {
-      fetchBundle();
+      fetchPaper();
     }
   }, [id]);
 
@@ -67,7 +67,7 @@ const BundleDetailsPage = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch(`/api/bundles/access/${id}`, {
+        const res = await fetch(`/api/papers/access/${id}`, {
           method: "GET",
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -93,7 +93,7 @@ const BundleDetailsPage = () => {
     }
   }, [id]);
 
-  const handlePayment = async () => {
+  const handlePaperPayment = async () => {
     setPaymentMessage("");
 
     const token = localStorage.getItem("token");
@@ -108,22 +108,22 @@ const BundleDetailsPage = () => {
       return;
     }
 
-    if (!bundle) {
-      setPaymentMessage("Bundle details are unavailable.");
+    if (!paper) {
+      setPaymentMessage("Paper details are unavailable.");
       return;
     }
 
     setPaymentLoading(true);
 
     try {
-      const res = await fetch("/api/payments/initiate", {
+      const res = await fetch("/api/payments/initiate-paper", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          bundleId: bundle._id,
+          paperId: paper._id,
           phone,
         }),
       });
@@ -150,11 +150,11 @@ const BundleDetailsPage = () => {
     }
   };
 
-  const handleProtectedDownload = async (paperId: string) => {
+  const handleProtectedDownload = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`/api/downloads/papers/${paperId}`, {
+      const res = await fetch(`/api/downloads/papers/${id}`, {
         method: "GET",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -181,16 +181,11 @@ const BundleDetailsPage = () => {
     }
   };
 
-  const savePct =
-    bundle && bundle.oldPrice > bundle.price
-      ? Math.round(((bundle.oldPrice - bundle.price) / bundle.oldPrice) * 100)
-      : 0;
-
   if (loading) {
     return (
       <main>
         <section className="mt-10">
-          <p className="text-light-200 text-sm">Loading bundle...</p>
+          <p className="text-light-200 text-sm">Loading paper...</p>
         </section>
       </main>
     );
@@ -206,13 +201,13 @@ const BundleDetailsPage = () => {
     );
   }
 
-  if (!bundle) {
+  if (!paper) {
     return (
       <main>
         <section className="mt-10 glass rounded-2xl border border-border-dark p-8 card-shadow">
-          <p className="text-light-100 font-semibold">Bundle not found</p>
+          <p className="text-light-100 font-semibold">Paper not found</p>
           <p className="text-light-200 text-sm mt-2">
-            The bundle you are looking for does not exist.
+            The paper you are looking for does not exist.
           </p>
         </section>
       </main>
@@ -222,8 +217,8 @@ const BundleDetailsPage = () => {
   return (
     <main>
       <section className="mt-6">
-        <Link href="/pricing" className="text-primary text-sm hover:underline">
-          ← Back to Pricing
+        <Link href="/papers" className="text-primary text-sm hover:underline">
+          ← Back to Papers
         </Link>
       </section>
 
@@ -232,78 +227,77 @@ const BundleDetailsPage = () => {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="pill">{bundle.tag}</span>
+                <span className="pill">{paper.subject}</span>
 
-                {savePct > 0 && (
+                {paper.isFree ? (
                   <span className="text-primary text-sm font-semibold">
-                    Save {savePct}%
+                    Free Resource
+                  </span>
+                ) : hasAccess ? (
+                  <span className="text-primary text-sm font-semibold">
+                    Access Granted
+                  </span>
+                ) : (
+                  <span className="text-light-200 text-sm font-semibold">
+                    Paid Access
                   </span>
                 )}
 
-                {hasAccess && !accessLoading && (
+                {paper.hasMarkingScheme && (
                   <span className="text-primary text-sm font-semibold">
-                    Access Granted
+                    Marking Scheme Included
                   </span>
                 )}
               </div>
 
               <h1 className="mt-5 text-4xl font-semibold text-gradient leading-tight">
-                {bundle.title}
+                {paper.title}
               </h1>
 
               <p className="text-light-200 mt-4 text-sm leading-relaxed">
-                {bundle.subtitle}
+                Official revision material designed to help students prepare
+                better with organized access to examination papers and marking
+                support where available.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-4 text-sm text-light-200">
-                <span>
-                  <span className="text-light-100 font-semibold">
-                    {bundle.papersCount}+
-                  </span>{" "}
-                  papers included
-                </span>
+                <span>{paper.form}</span>
                 <span>•</span>
-                <span>{bundle.access}</span>
+                <span>{paper.year}</span>
+                <span>•</span>
+                <span>{paper.type}</span>
               </div>
             </div>
 
             <div className="glass rounded-2xl border border-border-dark p-6 card-shadow min-w-[280px] w-full max-w-sm">
               <p className="text-light-200 text-sm">
-                {hasAccess && !accessLoading ? "Access" : "Bundle Price"}
+                {paper.isFree || hasAccess ? "Access" : "Paper Price"}
               </p>
 
               <div className="mt-3 flex items-center gap-3">
                 <p className="text-light-100 text-2xl font-bold">
-                  KES {bundle.price}
+                  {paper.isFree ? "FREE" : `KES ${paper.price}`}
                 </p>
-
-                {bundle.oldPrice > bundle.price && (
-                  <p className="text-light-200 text-sm line-through">
-                    KES {bundle.oldPrice}
-                  </p>
-                )}
               </div>
 
               {accessLoading ? (
                 <div className="mt-6">
                   <p className="text-light-200 text-sm">Checking access...</p>
                 </div>
-              ) : hasAccess ? (
+              ) : paper.isFree || hasAccess ? (
                 <div className="mt-6 space-y-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      const papersSection =
-                        document.getElementById("bundle-papers");
-                      papersSection?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                    onClick={handleProtectedDownload}
+                    className="inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                   >
-                    Open Bundle
+                    Download Paper
                   </button>
 
-                  <p className="text-light-200 text-xs mt-4 leading-relaxed">
-                    You already have access to this bundle.
+                  <p className="text-light-200 text-xs leading-relaxed">
+                    {paper.isFree
+                      ? "This paper is available for instant free download."
+                      : "You already have access to this paper."}
                   </p>
                 </div>
               ) : (
@@ -336,14 +330,14 @@ const BundleDetailsPage = () => {
 
                   <button
                     type="button"
-                    onClick={handlePayment}
+                    onClick={handlePaperPayment}
                     disabled={!phone.trim() || paymentLoading}
                     className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                   >
                     {paymentLoading ? "Processing..." : "Pay with M-Pesa"}
                   </button>
 
-                  <p className="text-light-200 text-xs mt-4 leading-relaxed">
+                  <p className="text-light-200 text-xs leading-relaxed">
                     One-time payment. Instant access after successful payment.
                   </p>
                 </div>
@@ -359,75 +353,29 @@ const BundleDetailsPage = () => {
         </div>
       </section>
 
-      <section id="bundle-papers" className="mt-12">
-        <div>
-          <h3>Included Papers</h3>
-          <p className="text-light-200 text-sm mt-2">
-            All papers currently included in this revision bundle.
-          </p>
-        </div>
-
-        {bundle.papers.length === 0 ? (
-          <div className="mt-8 glass rounded-2xl border border-border-dark p-8 card-shadow text-center">
-            <p className="text-light-100 font-semibold">No papers added yet</p>
-            <p className="text-light-200 text-sm mt-2">
-              This bundle does not yet contain any papers.
+      <section className="mt-12">
+        <div className="glass rounded-2xl border border-border-dark p-8 card-shadow">
+          <h3>Paper Notes</h3>
+          <div className="mt-4 space-y-3 text-sm text-light-200 leading-relaxed">
+            <p>
+              This resource is organized for easier student revision and exam
+              preparation.
+            </p>
+            <p>
+              {paper.hasMarkingScheme
+                ? "A marking scheme is included with this paper."
+                : "This paper currently does not include a marking scheme."}
+            </p>
+            <p>
+              {paper.isFree || hasAccess
+                ? "You can access this paper immediately."
+                : "Access will be granted after successful payment confirmation."}
             </p>
           </div>
-        ) : (
-          <div className="events mt-8">
-            {bundle.papers.map((paper) => (
-              <div
-                key={paper._id}
-                className="glass border border-dark-200 rounded-xl p-6 card-shadow transition duration-300 hover:-translate-y-1 hover:border-primary/40"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="pill">{paper.subject}</span>
-
-                  {paper.hasMarkingScheme && (
-                    <span className="text-primary text-xs font-semibold">
-                      Marking Scheme
-                    </span>
-                  )}
-                </div>
-
-                <h4 className="text-light-100 text-lg font-semibold mt-4 line-clamp-2">
-                  {paper.title}
-                </h4>
-
-                <div className="flex flex-wrap gap-3 mt-3 text-light-200 text-sm">
-                  <span>{paper.form}</span>
-                  <span>•</span>
-                  <span>{paper.year}</span>
-                  <span>•</span>
-                  <span>{paper.type}</span>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    href={`/papers/${paper._id}`}
-                    className="inline-flex rounded-[6px] border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
-                  >
-                    View Paper
-                  </Link>
-
-                  {hasAccess && (
-                    <button
-                      type="button"
-                      onClick={() => handleProtectedDownload(paper._id)}
-                      className="inline-flex rounded-[6px] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-                    >
-                      Download
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </section>
     </main>
   );
 };
 
-export default BundleDetailsPage;
+export default PaperDetailsPage;

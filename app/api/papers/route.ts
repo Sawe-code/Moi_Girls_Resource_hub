@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
-import Paper from "@/models/paper";
+import Paper from "@/models/Paper";
 import { handleApiError } from "@/lib/error";
 
 export async function GET(req: Request) {
