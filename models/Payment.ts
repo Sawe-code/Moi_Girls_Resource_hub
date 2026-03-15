@@ -1,19 +1,19 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, model, models } from "mongoose";
 
-const paymentSchema = new mongoose.Schema(
+const paymentSchema = new Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "User is required"],
     },
     bundle: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Bundle",
       default: null,
     },
     paper: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Paper",
       default: null,
     },
@@ -31,27 +31,30 @@ const paymentSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed"],
       default: "pending",
     },
+    reference: {
+      type: String,
+      required: [true, "Reference is required"],
+      trim: true,
+    },
     checkoutRequestId: {
       type: String,
-      default: null
+      default: null,
+      trim: true,
     },
     merchantRequestId: {
       type: String,
-      default: null
-    },
-    reference: {
-      type: String,
-      default: "",
+      default: null,
       trim: true,
     },
     paymentMethod: {
       type: String,
       default: "M-Pesa",
+      trim: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
+const Payment = models.Payment || model("Payment", paymentSchema);
 
 export default Payment;

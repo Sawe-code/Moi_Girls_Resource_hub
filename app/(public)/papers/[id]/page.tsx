@@ -60,36 +60,45 @@ const PaperDetailsPage = () => {
     }
   }, [id]);
 
-  useEffect(() => {
-    const checkAccess = async () => {
-      setAccessLoading(true);
+  const checkPaperAccess = async (
+    paperId: string,
+    token?: string | null,
+  ): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/papers/access/${paperId}`, {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
 
-      try {
-        const token = localStorage.getItem("token");
+      const data = await res.json();
 
-        const res = await fetch(`/api/papers/access/${id}`, {
-          method: "GET",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          setHasAccess(Boolean(data.hasAccess));
-        } else {
-          setHasAccess(false);
-        }
-      } catch {
-        setHasAccess(false);
-      } finally {
-        setAccessLoading(false);
+      if (res.ok) {
+        const access = Boolean(data.hasAccess);
+        setHasAccess(access);
+        return access;
       }
+
+      setHasAccess(false);
+      return false;
+    } catch {
+      setHasAccess(false);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    const runCheck = async () => {
+      setAccessLoading(true);
+      await checkPaperAccess(id, token);
+      setAccessLoading(false);
     };
 
     if (id) {
-      checkAccess();
+      runCheck();
     }
   }, [id]);
 
@@ -135,10 +144,28 @@ const PaperDetailsPage = () => {
       }
 
       setPaymentMessage(
-        data.message || "M-Pesa prompt sent to your phone successfully.",
+        data.message || "Payment request accepted. Waiting for confirmation...",
       );
 
-      setHasAccess(true);
+      setTimeout(async () => {
+        try {
+          const confirmed = await checkPaperAccess(paper._id, token);
+
+          if (confirmed) {
+            setPaymentMessage(
+              "Payment confirmed successfully. You now have access to this paper.",
+            );
+          } else {
+            setPaymentMessage(
+              "Payment request was sent successfully. Please wait a few moments, then refresh if access is not updated yet.",
+            );
+          }
+        } catch {
+          setPaymentMessage(
+            "Payment request was sent successfully. Please wait a few moments, then refresh if access is not updated yet.",
+          );
+        }
+      }, 5000);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setPaymentMessage(err.message);
@@ -338,7 +365,8 @@ const PaperDetailsPage = () => {
                   </button>
 
                   <p className="text-light-200 text-xs leading-relaxed">
-                    One-time payment. Instant access after successful payment.
+                    One-time payment. Access is granted after successful payment
+                    confirmation.
                   </p>
                 </div>
               )}
