@@ -31,7 +31,6 @@ const getEnvVar = (key: string): string => {
 };
 
 const JWT_SECRET = getEnvVar("JWT_SECRET");
-const PAYMENT_MODE = process.env.PAYMENT_MODE || "mock";
 
 const generateReference = () => {
   return `PAY-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
@@ -142,40 +141,8 @@ export async function POST(req: NextRequest) {
       amount: paper.price,
       status: "pending",
       reference: generateReference(),
-      paymentMethod: PAYMENT_MODE === "mock" ? "Mock" : "M-Pesa",
+      paymentMethod: "M-Pesa",
     });
-
-    if (PAYMENT_MODE === "mock") {
-      payment.status = "completed";
-      await payment.save();
-
-      const existingMockPurchase = await Purchase.findOne({
-        payment: payment._id,
-      });
-
-      if (!existingMockPurchase) {
-        await Purchase.create({
-          user: payment.user,
-          paper: payment.paper,
-          bundle: null,
-          amount: payment.amount,
-          payment: payment._id,
-        });
-      }
-
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Mock payment completed successfully.",
-          data: {
-            paymentId: payment._id,
-            reference: payment.reference,
-            status: payment.status,
-          },
-        },
-        { status: 200 },
-      );
-    }
 
     const accessToken = await getAccessToken();
     const timestamp = generateTimestamp();
@@ -207,6 +174,12 @@ export async function POST(req: NextRequest) {
     });
 
     const stkData = await stkRes.json();
+
+    console.log("===== PAPER STK DEBUG =====");
+    console.log("PAPER STK status:", stkRes.status);
+    console.log("PAPER STK payload:", stkPayload);
+    console.log("PAPER STK response:", stkData);
+    console.log("===========================");
 
     if (!stkRes.ok) {
       payment.status = "failed";
