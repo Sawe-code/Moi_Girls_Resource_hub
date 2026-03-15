@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/db";
-import Paper from "@/models/Paper";
+import Bundle from "@/models/bundle";
 import Payment from "@/models/Payment";
 import Purchase from "@/models/Purchase";
 import { handleApiError } from "@/lib/error";
@@ -44,10 +44,7 @@ export async function POST(req: NextRequest) {
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
+        { success: false, error: "Unauthorized" },
         { status: 401 },
       );
     }
@@ -60,26 +57,23 @@ export async function POST(req: NextRequest) {
       decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     } catch {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid or expired token",
-        },
+        { success: false, error: "Invalid or expired token" },
         { status: 401 },
       );
     }
 
     const body = await req.json();
 
-    const { paperId, phone } = body as {
-      paperId?: string;
+    const { bundleId, phone } = body as {
+      bundleId?: string;
       phone?: string;
     };
 
-    if (!paperId || !phone) {
+    if (!bundleId || !phone) {
       return NextResponse.json(
         {
           success: false,
-          error: "Paper ID and phone number are required",
+          error: "Bundle ID and phone number are required",
         },
         { status: 400 },
       );
@@ -97,38 +91,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paper = await Paper.findById(paperId);
+    const bundle = await Bundle.findById(bundleId);
 
-    if (!paper) {
+    if (!bundle) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Paper not found",
-        },
+        { success: false, error: "Bundle not found" },
         { status: 404 },
-      );
-    }
-
-    if (paper.isFree) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "This paper is free and does not require payment",
-        },
-        { status: 400 },
       );
     }
 
     const existingPurchase = await Purchase.findOne({
       user: decoded.id,
-      paper: paper._id,
+      bundle: bundle._id,
     });
 
     if (existingPurchase) {
       return NextResponse.json(
         {
           success: false,
-          error: "You already own this paper",
+          error: "You already own this bundle",
         },
         { status: 400 },
       );
@@ -136,11 +117,13 @@ export async function POST(req: NextRequest) {
 
     const payment = await Payment.create({
       user: decoded.id,
-      paper: paper._id,
+      bundle: bundle._id,
       phone: normalizedPhone,
-      amount: paper.price,
+      amount: bundle.price,
       status: "pending",
       reference: generateReference(),
+      checkoutRequestId: null,
+      merchantRequestId: null,
       paymentMethod: "M-Pesa",
     });
 
@@ -154,13 +137,13 @@ export async function POST(req: NextRequest) {
       Password: password,
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
-      Amount: Math.round(paper.price),
+      Amount: Math.round(bundle.price),
       PartyA: normalizedPhone,
       PartyB: MPESA_SHORTCODE,
       PhoneNumber: normalizedPhone,
       CallBackURL: MPESA_CALLBACK_URL,
       AccountReference: payment.reference,
-      TransactionDesc: paper.title,
+      TransactionDesc: bundle.title,
     };
 
     const stkRes = await fetch(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
@@ -175,11 +158,11 @@ export async function POST(req: NextRequest) {
 
     const stkData = await stkRes.json();
 
-    console.log("===== PAPER STK DEBUG =====");
-    console.log("PAPER STK status:", stkRes.status);
-    console.log("PAPER STK payload:", stkPayload);
-    console.log("PAPER STK response:", stkData);
-    console.log("===========================");
+    console.log("===== STK DEBUG =====");
+    console.log("STK status:", stkRes.status);
+    console.log("STK payload:", stkPayload);
+    console.log("STK response:", stkData);
+    console.log("=====================");
 
     if (!stkRes.ok) {
       payment.status = "failed";
@@ -197,7 +180,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    payment.reference = stkData.CheckoutRequestID || payment.reference;
+    payment.checkoutRequestId = stkData.CheckoutRequestID || null;
+    payment.merchantRequestId = stkData.MerchantRequestID || null;
     await payment.save();
 
     return NextResponse.json(
@@ -205,6 +189,8 @@ export async function POST(req: NextRequest) {
         success: true,
         message: stkData.CustomerMessage || "STK push sent successfully",
         data: {
+          paymentId: payment._id,
+          reference: payment.reference,
           merchantRequestId: stkData.MerchantRequestID,
           checkoutRequestId: stkData.CheckoutRequestID,
           responseCode: stkData.ResponseCode,
@@ -217,12 +203,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const { status, message } = handleApiError(error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status },
-    );
+    return NextResponse.json({ success: false, error: message }, { status });
   }
 }

@@ -122,6 +122,8 @@ export async function POST(req: NextRequest) {
       amount: bundle.price,
       status: "pending",
       reference: generateReference(),
+      checkoutRequestId: null,
+      merchantRequestId: null,
       paymentMethod: "M-Pesa",
     });
 
@@ -178,7 +180,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    payment.reference = stkData.CheckoutRequestID || payment.reference;
+    payment.checkoutRequestId = stkData.CheckoutRequestID || null;
+    payment.merchantRequestId = stkData.MerchantRequestID || null;
     await payment.save();
 
     return NextResponse.json(
@@ -186,6 +189,8 @@ export async function POST(req: NextRequest) {
         success: true,
         message: stkData.CustomerMessage || "STK push sent successfully",
         data: {
+          paymentId: payment._id,
+          reference: payment.reference,
           merchantRequestId: stkData.MerchantRequestID,
           checkoutRequestId: stkData.CheckoutRequestID,
           responseCode: stkData.ResponseCode,

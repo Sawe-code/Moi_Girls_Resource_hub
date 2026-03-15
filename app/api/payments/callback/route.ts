@@ -9,25 +9,34 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
+    console.log("===== MPESA CALLBACK RAW =====");
+    console.log(JSON.stringify(body, null, 2));
+    console.log("==============================");
+
     const callback = body?.Body?.stkCallback;
 
     if (!callback) {
       return NextResponse.json(
         { success: false, error: "Invalid callback payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const checkoutRequestId = callback.CheckoutRequestID;
-    const resultCode = callback.ResultCode;
+    const resultCode = Number(callback.ResultCode);
     const resultDesc = callback.ResultDesc;
 
-    const payment = await Payment.findOne({ reference: checkoutRequestId });
+    const payment = await Payment.findOne({ checkoutRequestId });
 
     if (!payment) {
+      console.log(
+        "Payment record not found for checkoutRequestId:",
+        checkoutRequestId,
+      );
+
       return NextResponse.json(
         { success: false, error: "Payment record not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -53,21 +62,18 @@ export async function POST(req: Request) {
       await payment.save();
     }
 
-    console.log("===== MPESA CALLBACK =====");
-    console.log(JSON.stringify(body, null, 2));
     console.log("Result:", resultDesc);
-    console.log("==========================");
 
     return NextResponse.json(
       { success: true, message: "Callback received successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("MPESA CALLBACK ERROR:", error);
 
     return NextResponse.json(
       { success: false, error: "Failed to process callback" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

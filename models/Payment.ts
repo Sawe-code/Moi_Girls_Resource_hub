@@ -31,6 +31,14 @@ const paymentSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed"],
       default: "pending",
     },
+    checkoutRequestId: {
+      type: String,
+      default: null
+    },
+    merchantRequestId: {
+      type: String,
+      default: null
+    },
     reference: {
       type: String,
       default: "",
