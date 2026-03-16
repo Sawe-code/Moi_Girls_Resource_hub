@@ -67,12 +67,12 @@ const Footer = () => {
             <p className="text-light-100 font-semibold">Support</p>
             <ul className="mt-4 space-y-3 list-none">
               <li className="text-light-200 text-sm">
-                <Link href="/faq" className="hover:text-primary transition">
+                <Link href="/#faqs" className="hover:text-primary transition">
                   FAQs
                 </Link>
               </li>
               <li className="text-light-200 text-sm">
-                <Link href="/contact" className="hover:text-primary transition">
+                <Link href="/#contact" className="hover:text-primary transition">
                   Academic Office
                 </Link>
               </li>
@@ -94,7 +94,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div id="contact">
             <p className="text-light-100 font-semibold">Contact</p>
             <address className="mt-4 space-y-3 text-light-200 text-sm not-italic">
               <p>Eldoret, Kenya</p>

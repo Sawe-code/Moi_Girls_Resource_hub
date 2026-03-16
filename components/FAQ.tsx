@@ -7,7 +7,7 @@ const FAQ = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <section className="mt-20">
+    <section className="mt-20" id="faqs">
       <div className="text-center max-w-2xl mx-auto">
         <h3>Frequently Asked Questions</h3>
         <p className="text-light-200 text-sm mt-2">
