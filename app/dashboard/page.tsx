@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { StoredUser, Paper, PurchasePayment, Bundle } from "@/types";
+import { useRouter } from "next/navigation";
+import type { StoredUser, Paper, PurchasePayment } from "@/types";
 
 const StudentDashboard = () => {
+  const router = useRouter();
+
   const [user, setUser] = useState<StoredUser | null>(null);
+  const [welcomeText, setWelcomeText] = useState("Welcome back");
 
   const [stats, setStats] = useState([
     { label: "Papers Purchased", value: "0" },
@@ -19,11 +23,43 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      setUser(storedUser ? JSON.parse(storedUser) : null);
-    } catch {
-      setUser(null);
+    const fetchMe = async () => {
+      try {
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          router.push("/login");
+          return;
+        }
+
+        const data = await res.json();
+        setUser(data.user);
+      } catch {
+        router.push("/login");
+      }
+    };
+
+    fetchMe();
+  }, [router]);
+
+  useEffect(() => {
+    const storedWelcome = sessionStorage.getItem("loginWelcome");
+
+    if (storedWelcome) {
+      try {
+        const parsed = JSON.parse(storedWelcome) as {
+          isFirstLogin: boolean;
+        };
+
+        setWelcomeText(parsed.isFirstLogin ? "Welcome" : "Welcome back");
+      } catch {
+        setWelcomeText("Welcome back");
+      }
+
+      sessionStorage.removeItem("loginWelcome");
     }
   }, []);
 
@@ -32,30 +68,26 @@ const StudentDashboard = () => {
       setLoading(true);
 
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
         const [statsRes, purchasesRes, libraryRes] = await Promise.all([
           fetch("/api/dashboard/stats", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
           }),
           fetch("/api/purchases", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
           }),
           fetch("/api/library", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
           }),
         ]);
+
+        if (
+          statsRes.status === 401 ||
+          purchasesRes.status === 401 ||
+          libraryRes.status === 401
+        ) {
+          router.push("/login");
+          return;
+        }
 
         const statsData = await statsRes.json();
         const purchasesData = await purchasesRes.json();
@@ -97,7 +129,7 @@ const StudentDashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [router]);
 
   return (
     <div className="space-y-8">
@@ -105,15 +137,15 @@ const StudentDashboard = () => {
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
             <p className="text-light-200 text-sm">
-              {user?.isFirstLogin
-                ? `Welcome, ${user?.name}`
-                : `Welcome back, ${user?.name}`}
+              {welcomeText}, {user?.name}
             </p>
+
             <h1 className="mt-2 text-4xl font-semibold text-gradient leading-tight">
-              {user?.isFirstLogin
+              {welcomeText === "Welcome"
                 ? "Start your revision journey and explore your available resources."
                 : "Continue with your revision."}
             </h1>
+
             <p className="text-light-200 mt-4 max-w-2xl text-sm leading-relaxed">
               Access your purchased resources, download past papers, and keep
               track of your revision materials from one place.

@@ -51,12 +51,6 @@ const AdminUsersPage = () => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Please log in as admin.");
-      }
-
       const params = new URLSearchParams();
 
       if (searchTerm.trim()) {
@@ -68,9 +62,7 @@ const AdminUsersPage = () => {
 
       const res = await fetch(`/api/admin/users?${params.toString()}`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -114,17 +106,9 @@ const AdminUsersPage = () => {
     setDeletingUserId(userId);
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Please log in as admin.");
-      }
-
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -155,17 +139,11 @@ const AdminUsersPage = () => {
     setUpdatingRoleUserId(userId);
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Please log in as admin.");
-      }
-
       const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           role: "admin",

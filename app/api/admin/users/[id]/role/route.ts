@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/user";
 import { handleApiError } from "@/lib/error";
-
-type JwtPayload = {
-  id: string;
-  role: string;
-};
-
-const getEnvVar = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`${key} is not defined`);
-  }
-
-  return value;
-};
-
-const JWT_SECRET = getEnvVar("JWT_SECRET");
+import { getAuthUser } from "@/lib/auth";
 
 type RouteContext = {
   params: Promise<{
@@ -31,29 +14,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     await connectToDatabase();
 
-    const authHeader = req.headers.get("authorization");
+    const authUser = getAuthUser(req);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    let decoded: JwtPayload;
-
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
-
-    if (decoded.role !== "admin") {
+    if (authUser.role !== "admin") {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 },
@@ -80,7 +43,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
-    if (String(user._id) === decoded.id) {
+    if (String(user._id) === authUser.id) {
       return NextResponse.json(
         {
           success: false,

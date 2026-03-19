@@ -49,6 +49,7 @@ const LoginPage = () => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -63,9 +64,13 @@ const LoginPage = () => {
         throw new Error(data.error || "Login Failed.");
       }
       if (data.success) {
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        console.log("saved user:", localStorage.getItem("user"));
+        sessionStorage.setItem(
+          "LoginWelcome",
+          JSON.stringify({
+            name: data.data.user.name,
+            isFirstLogin: data.data.user.isFirstLogin,
+          }),
+        );
         if (data.data.user.role === "admin") {
           router.push("/admin");
         } else {

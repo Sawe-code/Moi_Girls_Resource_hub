@@ -6,9 +6,13 @@ type AdminTopbarProps = {
 };
 const AdminTopbar = ({ onMenuClick }: AdminTopbarProps) => {
   const router = useRouter();
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
     router.push("/login");
+    router.refresh();
   };
   return (
     <div className="flex items-center justify-between border-b border-border-dark bg-white px-5 py-5 sm:px-8">

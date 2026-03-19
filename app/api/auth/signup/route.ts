@@ -41,7 +41,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -57,23 +59,34 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUsers = await User.create(
-      [{ name, email, password: hashedPassword }],
+      [
+        {
+          name,
+          email,
+          password: hashedPassword,
+          hasLoggedInBefore: false,
+          role: "user",
+        },
+      ],
       { session },
     );
 
-    const token = jwt.sign({ id: newUsers[0]._id.toString() }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
-    });
+    const token = jwt.sign(
+      { id: newUsers[0]._id.toString(), role: newUsers[0].role },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+      },
+    );
 
     await session.commitTransaction();
     await session.endSession();
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         message: "User created successfully",
         success: true,
         data: {
-          token,
           user: {
             id: newUsers[0]._id,
             name: newUsers[0].name,
@@ -87,6 +100,14 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+    return response;
   } catch (error: unknown) {
     console.error("SIGNUP ERROR:", error);
     await session.abortTransaction();

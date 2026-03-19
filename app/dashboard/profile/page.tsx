@@ -21,17 +21,9 @@ const StudentProfilePage = () => {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("Please log in to view your profile.");
-        }
-
         const res = await fetch("/api/profile", {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
 
         const data = await res.json();

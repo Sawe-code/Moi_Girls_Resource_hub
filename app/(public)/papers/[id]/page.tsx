@@ -25,9 +25,22 @@ const PaperDetailsPage = () => {
   const [accessLoading, setAccessLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(Boolean(token));
-    setHasCheckedAuth(true);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        setIsLoggedIn(res.ok);
+      } catch {
+        setIsLoggedIn(false);
+      } finally {
+        setHasCheckedAuth(true);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -60,16 +73,11 @@ const PaperDetailsPage = () => {
     }
   }, [id]);
 
-  const checkPaperAccess = async (
-    paperId: string,
-    token?: string | null,
-  ): Promise<boolean> => {
+  const checkPaperAccess = async (paperId: string): Promise<boolean> => {
     try {
       const res = await fetch(`/api/papers/access/${paperId}`, {
         method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -89,11 +97,9 @@ const PaperDetailsPage = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
     const runCheck = async () => {
       setAccessLoading(true);
-      await checkPaperAccess(id, token);
+      await checkPaperAccess(id);
       setAccessLoading(false);
     };
 
@@ -105,9 +111,7 @@ const PaperDetailsPage = () => {
   const handlePaperPayment = async () => {
     setPaymentMessage("");
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
+    if (!isLoggedIn) {
       setPaymentMessage("Please log in before making payment.");
       return;
     }
@@ -129,8 +133,8 @@ const PaperDetailsPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           paperId: paper._id,
           phone,
@@ -149,7 +153,7 @@ const PaperDetailsPage = () => {
 
       setTimeout(async () => {
         try {
-          const confirmed = await checkPaperAccess(paper._id, token);
+          const confirmed = await checkPaperAccess(paper._id);
 
           if (confirmed) {
             setPaymentMessage(
@@ -179,13 +183,9 @@ const PaperDetailsPage = () => {
 
   const handleProtectedDownload = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(`/api/downloads/papers/${id}`, {
         method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -358,7 +358,7 @@ const PaperDetailsPage = () => {
                   <button
                     type="button"
                     onClick={handlePaperPayment}
-                    disabled={!phone.trim() || paymentLoading}
+                    disabled={!phone.trim() || paymentLoading || !isLoggedIn}
                     className="w-full rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                   >
                     {paymentLoading ? "Processing..." : "Pay with M-Pesa"}

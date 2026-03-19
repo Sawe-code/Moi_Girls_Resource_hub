@@ -1,58 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/user";
 import Paper from "@/models/Paper";
 import Bundle from "@/models/bundle";
 import Payment from "@/models/Payment";
 import { handleApiError } from "@/lib/error";
-
-type JwtPayload = {
-  id: string;
-  role: string;
-};
-
-const getEnvVar = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`${key} is not defined`);
-  }
-
-  return value;
-};
-
-const JWT_SECRET = getEnvVar("JWT_SECRET");
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authHeader = req.headers.get("authorization");
+    const authUser = getAuthUser(req);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (authUser.role !== "admin") {
       return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    let decoded: JwtPayload;
-
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
-
-    if (decoded.role !== "admin") {
-      return NextResponse.json(
-        { success: false, error: "Forbidden" },
+        {
+          success: false,
+          error: "Forbidden",
+        },
         { status: 403 },
       );
     }

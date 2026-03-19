@@ -17,12 +17,6 @@ const AdminPaymentsPage = () => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Please log in as admin.");
-      }
-
       const params = new URLSearchParams();
 
       if (searchTerm.trim()) {
@@ -37,9 +31,7 @@ const AdminPaymentsPage = () => {
         `/api/admin/payments${params.toString() ? `?${params.toString()}` : ""}`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         },
       );
 

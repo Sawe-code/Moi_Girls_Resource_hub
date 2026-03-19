@@ -53,6 +53,7 @@ const SignUpPage = () => {
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -66,10 +67,6 @@ const SignUpPage = () => {
       if (!res.ok) {
         throw new Error(data.error || "Signup failed");
       }
-
-      console.log(data);
-      localStorage.setItem("token", data.data.token);
-      localStorage.setItem("user", JSON.stringify(data.data.user));
 
       if (data.data.user.role === "admin") {
         router.push("/admin");

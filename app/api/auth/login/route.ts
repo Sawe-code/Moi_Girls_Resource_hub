@@ -39,8 +39,8 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         {
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("Before update:", user.hasLoggedInBefore);
+    
 
     const isFirstLogin = user.hasLoggedInBefore !== true;
 
@@ -70,8 +70,7 @@ export async function POST(req: Request) {
     user.lastLoginAt = new Date();
     await user.save();
 
-    console.log("After update:", user.hasLoggedInBefore);
-    console.log("Returned isFirstLogin:", isFirstLogin);
+    
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
@@ -80,12 +79,11 @@ export async function POST(req: Request) {
     await session.commitTransaction();
     await session.endSession();
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
         message: "User logged in successfully",
         data: {
-          token,
           user: {
             id: user._id,
             role: user.role,
@@ -99,6 +97,14 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     await session.abortTransaction();

@@ -144,7 +144,7 @@ const ResetPasswordClient = () => {
                 required
               />
             </div>
-
+            <p className="text-red-500">Password: {formData.password} | Confirm Password: {formData.confirmPassword}</p>
             <button
               type="submit"
               disabled={

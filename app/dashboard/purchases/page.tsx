@@ -15,17 +15,9 @@ const PurchasesPage = () => {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("Please log in to view your purchases.");
-        }
-
         const res = await fetch("/api/purchases", {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
 
         const data = await res.json();

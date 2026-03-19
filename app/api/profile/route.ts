@@ -1,53 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/user";
 import { handleApiError } from "@/lib/error";
-
-type JwtPayload = {
-  id: string;
-  role: string;
-};
-
-const getEnvVar = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`${key} is not defined`);
-  }
-
-  return value;
-};
-
-const JWT_SECRET = getEnvVar("JWT_SECRET");
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authHeader = req.headers.get("authorization");
+    const authUser = getAuthUser(req);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    let decoded: JwtPayload;
-
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
-
-    const user = await User.findById(decoded.id).select(
+    const user = await User.findById(authUser.id).select(
       "name email role createdAt lastLoginAt hasLoggedInBefore",
     );
 
@@ -76,27 +39,7 @@ export async function PATCH(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authHeader = req.headers.get("authorization");
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    let decoded: JwtPayload;
-
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
+    const authUser = getAuthUser(req);
 
     const body = await req.json();
     const { name, email } = body as {
@@ -113,7 +56,7 @@ export async function PATCH(req: NextRequest) {
 
     const existingUser = await User.findOne({
       email: email.trim(),
-      _id: { $ne: decoded.id },
+      _id: { $ne: authUser.id },
     });
 
     if (existingUser) {
@@ -124,7 +67,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updatedUser = await User.findByIdAndUpdate(
-      decoded.id,
+      authUser.id,
       {
         name: name.trim(),
         email: email.trim(),

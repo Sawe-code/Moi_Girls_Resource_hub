@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import connectToDatabase from "@/lib/db";
 import Paper from "@/models/Paper";
 import Payment from "@/models/Payment";
@@ -15,22 +14,7 @@ import {
   MPESA_CALLBACK_URL,
 } from "@/lib/mpesa";
 
-type JwtPayload = {
-  id: string;
-  role: string;
-};
-
-const getEnvVar = (key: string): string => {
-  const value = process.env[key];
-
-  if (!value) {
-    throw new Error(`${key} is not defined`);
-  }
-
-  return value;
-};
-
-const JWT_SECRET = getEnvVar("JWT_SECRET");
+import { getAuthUser } from "@/lib/auth";
 
 const generateReference = () => {
   return `PAY-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
@@ -40,33 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authHeader = req.headers.get("authorization");
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    let decoded: JwtPayload;
-
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid or expired token",
-        },
-        { status: 401 },
-      );
-    }
+    const authUser = getAuthUser(req);
 
     const body = await req.json();
 
@@ -122,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     const existingPurchase = await Purchase.findOne({
-      user: decoded.id,
+      user: authUser.id,
       paper: paper._id,
     });
 
@@ -137,7 +95,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payment = await Payment.create({
-      user: decoded.id,
+      user: authUser.id,
       paper: paper._id,
       bundle: null,
       phone: normalizedPhone,

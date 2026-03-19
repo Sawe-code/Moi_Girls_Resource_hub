@@ -11,8 +11,10 @@ import {
   AdminPaymentSummary,
   AdminRevenueChartItem,
 } from "@/types";
+import { useRouter } from "next/navigation";
 
 const AdminDashboard = () => {
+  const router = useRouter();
   const [user, setUser] = useState<StoredUser | null>(null);
 
   const [stats, setStats] = useState<AdminOverviewStats>({
@@ -39,13 +41,28 @@ const AdminDashboard = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      setUser(storedUser ? JSON.parse(storedUser) : null);
-    } catch {
-      setUser(null);
-    }
-  }, []);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        console.log("Me Response: ", data);
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load user");
+        }
+
+        setUser(data.user);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     const fetchAdminOverview = async () => {
@@ -53,17 +70,9 @@ const AdminDashboard = () => {
       setError("");
 
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("Please log in as admin.");
-        }
-
         const res = await fetch("/api/admin/overview", {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
 
         const data = await res.json();
