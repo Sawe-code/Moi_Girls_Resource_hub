@@ -155,3 +155,10 @@ export type UserProfile = {
   lastLoginAt?: string | null;
   hasLoggedInBefore?: boolean;
 };
+
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
