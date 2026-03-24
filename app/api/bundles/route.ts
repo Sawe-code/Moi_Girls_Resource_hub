@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Bundle from "@/models/bundle";
+import "@/models/Paper";
 import { handleApiError } from "@/lib/error";
 
 export async function GET() {
