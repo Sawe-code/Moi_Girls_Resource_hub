@@ -12,6 +12,7 @@ import {
   normalizeKenyanPhone,
   MPESA_SHORTCODE,
   MPESA_CALLBACK_URL,
+  validateMpesaConfig,
 } from "@/lib/mpesa";
 
 import { getAuthUser } from "@/lib/auth";
@@ -25,10 +26,9 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const authUser = getAuthUser(req);
+    validateMpesaConfig();
 
     const body = await req.json();
-
-    console.log("PAPER PAYMENT BODY:", body);
 
     const { paperId, phone } = body as {
       paperId?: string;
@@ -138,13 +138,12 @@ export async function POST(req: NextRequest) {
 
     const stkData = await stkRes.json();
 
-    console.log("===== PAPER STK DEBUG =====");
-    console.log("PAPER STK status:", stkRes.status);
-    console.log("PAPER STK payload:", stkPayload);
-    console.log("PAPER STK response:", stkData);
-    console.log("===========================");
-
     if (!stkRes.ok) {
+      console.error("M-Pesa paper STK request rejected", {
+        status: stkRes.status,
+        errorCode: stkData.errorCode,
+        errorMessage: stkData.errorMessage,
+      });
       payment.status = "failed";
       await payment.save();
 

@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/user";
 import { handleApiError } from "@/lib/error";
-import { getAuthUser } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authUser = getAuthUser(req);
+    const authUser = await getCurrentAuthUser(req);
     if (authUser.role !== "admin") {
       return NextResponse.json(
         {

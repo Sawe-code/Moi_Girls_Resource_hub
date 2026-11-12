@@ -5,7 +5,7 @@ import User from "@/models/user";
 import Paper from "@/models/Paper";
 import Bundle from "@/models/bundle";
 import { handleApiError } from "@/lib/error";
-import { getAuthUser } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 
 void User;
 void Paper;
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authUser = getAuthUser(req);
+    const authUser = await getCurrentAuthUser(req);
 
     if (authUser.role !== "admin") {
       return NextResponse.json(

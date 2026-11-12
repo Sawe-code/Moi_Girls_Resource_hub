@@ -5,13 +5,13 @@ import Paper from "@/models/Paper";
 import Bundle from "@/models/bundle";
 import Payment from "@/models/Payment";
 import { handleApiError } from "@/lib/error";
-import { getAuthUser } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
 
-    const authUser = getAuthUser(req);
+    const authUser = await getCurrentAuthUser(req);
 
     if (authUser.role !== "admin") {
       return NextResponse.json(

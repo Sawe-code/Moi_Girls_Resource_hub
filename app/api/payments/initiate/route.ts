@@ -13,6 +13,7 @@ import {
   normalizeKenyanPhone,
   MPESA_SHORTCODE,
   MPESA_CALLBACK_URL,
+  validateMpesaConfig,
 } from "@/lib/mpesa";
 import { getAuthUser } from "@/lib/auth";
 
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const authUser = getAuthUser(req);
+    validateMpesaConfig();
 
     const body = await req.json();
 
@@ -124,13 +126,12 @@ export async function POST(req: NextRequest) {
 
     const stkData = await stkRes.json();
 
-    console.log("===== STK DEBUG =====");
-    console.log("STK status:", stkRes.status);
-    console.log("STK payload:", stkPayload);
-    console.log("STK response:", stkData);
-    console.log("=====================");
-
     if (!stkRes.ok) {
+      console.error("M-Pesa bundle STK request rejected", {
+        status: stkRes.status,
+        errorCode: stkData.errorCode,
+        errorMessage: stkData.errorMessage,
+      });
       payment.status = "failed";
       await payment.save();
 

@@ -4,7 +4,7 @@ import User from "@/models/user";
 import Payment from "@/models/Payment";
 import Purchase from "@/models/Purchase";
 import { handleApiError } from "@/lib/error";
-import { getAuthUser } from "@/lib/auth";
+import { getCurrentAuthUser } from "@/lib/auth";
 
 type RouteContext = {
   params: Promise<{
@@ -16,7 +16,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     await connectToDatabase();
 
-    const authUser = await getAuthUser(req);
+    const authUser = await getCurrentAuthUser(req);
 
     if (authUser.role !== "admin") {
       return NextResponse.json(

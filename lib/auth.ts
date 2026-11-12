@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
+import User from "@/models/user";
 
 type AuthUser = {
   id: string;
@@ -27,4 +28,21 @@ export const getAuthUser = (req: NextRequest): AuthUser => {
 
   const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
   return decoded;
+};
+
+/**
+ * Resolve the role from MongoDB for authorization checks. The role claim in an
+ * existing session token can be stale after an account's role is changed.
+ */
+export const getCurrentAuthUser = async (
+  req: NextRequest,
+): Promise<AuthUser> => {
+  const tokenUser = getAuthUser(req);
+  const user = await User.findById(tokenUser.id).select("role").lean();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  return { id: tokenUser.id, role: user.role };
 };

@@ -15,19 +15,37 @@ export const MPESA_SHORTCODE = getEnvVar("MPESA_SHORTCODE");
 export const MPESA_PASSKEY = getEnvVar("MPESA_PASSKEY");
 export const MPESA_CALLBACK_URL = getEnvVar("MPESA_CALLBACK_URL");
 
-console.log("========== MPESA DEBUG ==========");
-console.log("MPESA ENV:", MPESA_ENV);
-console.log(
-  "BASE URL:",
-  MPESA_ENV === "production"
-    ? "https://api.safaricom.co.ke"
-    : "https://sandbox.safaricom.co.ke",
-);
-console.log("KEY PRESENT:", Boolean(MPESA_CONSUMER_KEY));
-console.log("SECRET PRESENT:", Boolean(MPESA_CONSUMER_SECRET));
-console.log("SHORTCODE:", MPESA_SHORTCODE);
-console.log("CALLBACK URL:", MPESA_CALLBACK_URL);
-console.log("=================================");
+const isPlaceholder = (value: string) =>
+  /your[_-]|placeholder|replace.?me|example|ngrok-url|<.*>/i.test(value);
+
+export const validateMpesaConfig = () => {
+  if (!["sandbox", "production"].includes(MPESA_ENV)) {
+    throw new Error('MPESA_ENV must be "sandbox" or "production"');
+  }
+
+  if (isPlaceholder(MPESA_PASSKEY)) {
+    throw new Error(
+      "MPESA_PASSKEY is still a placeholder. Set the passkey from your Daraja app's test credentials.",
+    );
+  }
+
+  if (isPlaceholder(MPESA_CALLBACK_URL)) {
+    throw new Error(
+      "MPESA_CALLBACK_URL is still a placeholder. Set it to a publicly reachable HTTPS callback URL.",
+    );
+  }
+
+  let callbackUrl: URL;
+  try {
+    callbackUrl = new URL(MPESA_CALLBACK_URL);
+  } catch {
+    throw new Error("MPESA_CALLBACK_URL must be a valid HTTPS URL");
+  }
+
+  if (callbackUrl.protocol !== "https:") {
+    throw new Error("MPESA_CALLBACK_URL must use HTTPS");
+  }
+};
 
 export const getMpesaBaseUrl = () => {
   return MPESA_ENV === "production"
@@ -68,6 +86,7 @@ export const normalizeKenyanPhone = (phone: string) => {
 };
 
 export const getAccessToken = async () => {
+  validateMpesaConfig();
   const baseUrl = getMpesaBaseUrl();
   const auth = Buffer.from(
     `${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`,
@@ -85,11 +104,6 @@ export const getAccessToken = async () => {
   );
 
   const data = await res.json();
-
-  console.log("===== OAUTH DEBUG =====");
-  console.log("OAuth status:", res.status);
-  console.log("OAuth response:", data);
-  console.log("=======================");
 
   if (!res.ok) {
     throw new Error(
